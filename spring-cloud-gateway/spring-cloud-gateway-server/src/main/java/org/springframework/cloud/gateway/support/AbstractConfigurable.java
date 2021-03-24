@@ -27,7 +27,6 @@ public abstract class AbstractConfigurable<C> implements Configurable<C> {
 		this.configClass = configClass;
 	}
 
-	@Override
 	public Class<C> getConfigClass() {
 		return configClass;
 	}

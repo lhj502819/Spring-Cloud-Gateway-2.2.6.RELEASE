@@ -54,14 +54,15 @@ public class GatewayMetricsAutoConfigurationTests {
 		@Test
 		public void gatewayMetricsBeansExists() {
 			assertThat(filter).isNotNull();
-			assertThat(filter.getMetricsPrefix()).isEqualTo("spring.cloud.gateway");
+			assertThat(filter.getMetricsPrefix()).isEqualTo("gateway");
 			assertThat(tagsProviders).isNotEmpty();
 		}
 
 	}
 
 	@RunWith(SpringRunner.class)
-	@SpringBootTest(classes = Config.class, properties = "spring.cloud.gateway.metrics.enabled=false")
+	@SpringBootTest(classes = Config.class,
+			properties = "spring.cloud.gateway.metrics.enabled=false")
 	public static class DisabledByProperty {
 
 		@Autowired(required = false)
@@ -89,7 +90,8 @@ public class GatewayMetricsAutoConfigurationTests {
 		public void gatewayMetricsBeansExists() {
 			assertThat(filter).isNotNull();
 			assertThat(filter.getMetricsPrefix()).isEqualTo("myprefix");
-			assertThat(tagsProviders).extracting("class").contains(CustomTagsProviderConfig.EmptyTagsProvider.class);
+			assertThat(tagsProviders).extracting("class")
+					.contains(CustomTagsProviderConfig.EmptyTagsProvider.class);
 		}
 
 	}

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.netflix.loadbalancer.Server;
+import com.netflix.loadbalancer.ServerList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.After;
@@ -40,15 +42,13 @@ import reactor.core.publisher.ReplayProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.cloud.gateway.test.PermitAllSecurityConfiguration;
 import org.springframework.cloud.gateway.test.support.HttpServer;
 import org.springframework.cloud.gateway.test.support.ReactorHttpServer;
-import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
-import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
-import org.springframework.cloud.loadbalancer.support.ServiceInstanceListSuppliers;
+import org.springframework.cloud.netflix.ribbon.RibbonClient;
+import org.springframework.cloud.netflix.ribbon.StaticServerList;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.Lifecycle;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -56,7 +56,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.util.StringUtils;
@@ -101,7 +100,8 @@ public class WebSocketIntegrationTests {
 
 	private int gatewayPort;
 
-	private static Mono<Void> doSend(WebSocketSession session, Publisher<WebSocketMessage> output) {
+	private static Mono<Void> doSend(WebSocketSession session,
+			Publisher<WebSocketMessage> output) {
 		return session.send(output);
 		// workaround for suspected RxNetty WebSocket client issue
 		// https://github.com/ReactiveX/RxNetty/issues/560
@@ -125,9 +125,12 @@ public class WebSocketIntegrationTests {
 		}
 
 		this.gatewayContext = new SpringApplicationBuilder(GatewayConfig.class)
-				.properties("ws.server.port:" + this.serverPort, "server.port=0", "spring.jmx.enabled=false").run();
+				.properties("ws.server.port:" + this.serverPort, "server.port=0",
+						"spring.jmx.enabled=false")
+				.run();
 
-		ConfigurableEnvironment env = this.gatewayContext.getBean(ConfigurableEnvironment.class);
+		ConfigurableEnvironment env = this.gatewayContext
+				.getBean(ConfigurableEnvironment.class);
 		this.gatewayPort = Integer.valueOf(env.getProperty("local.server.port"));
 	}
 
@@ -166,11 +169,15 @@ public class WebSocketIntegrationTests {
 
 		client.execute(getUrl("/echo"), session -> {
 			logger.debug("Starting to send messages");
-			return session.send(input.doOnNext(s -> logger.debug("outbound " + s)).map(s -> session.textMessage(s)))
-					.thenMany(session.receive().take(count).map(WebSocketMessage::getPayloadAsText))
-					.subscribeWith(output).doOnNext(s -> logger.debug("inbound " + s)).then()
-					.doOnSuccess(aVoid -> logger.debug("Done with success"))
-					.doOnError(ex -> logger.debug("Done with " + (ex != null ? ex.getMessage() : "error")));
+			return session
+					.send(input.doOnNext(s -> logger.debug("outbound " + s))
+							.map(s -> session.textMessage(s)))
+					.thenMany(session.receive().take(count)
+							.map(WebSocketMessage::getPayloadAsText))
+					.subscribeWith(output).doOnNext(s -> logger.debug("inbound " + s))
+					.then().doOnSuccess(aVoid -> logger.debug("Done with success"))
+					.doOnError(ex -> logger.debug(
+							"Done with " + (ex != null ? ex.getMessage() : "error")));
 		}).block(Duration.ofMillis(5000));
 
 		assertThat(output.collectList().block(Duration.ofMillis(5000)))
@@ -185,11 +192,15 @@ public class WebSocketIntegrationTests {
 
 		client.execute(getHttpUrl("/echoForHttp"), session -> {
 			logger.debug("Starting to send messages");
-			return session.send(input.doOnNext(s -> logger.debug("outbound " + s)).map(s -> session.textMessage(s)))
-					.thenMany(session.receive().take(count).map(WebSocketMessage::getPayloadAsText))
-					.subscribeWith(output).doOnNext(s -> logger.debug("inbound " + s)).then()
-					.doOnSuccess(aVoid -> logger.debug("Done with success"))
-					.doOnError(ex -> logger.debug("Done with " + (ex != null ? ex.getMessage() : "error")));
+			return session
+					.send(input.doOnNext(s -> logger.debug("outbound " + s))
+							.map(s -> session.textMessage(s)))
+					.thenMany(session.receive().take(count)
+							.map(WebSocketMessage::getPayloadAsText))
+					.subscribeWith(output).doOnNext(s -> logger.debug("inbound " + s))
+					.then().doOnSuccess(aVoid -> logger.debug("Done with success"))
+					.doOnError(ex -> logger.debug(
+							"Done with " + (ex != null ? ex.getMessage() : "error")));
 		}).block(Duration.ofMillis(5000));
 
 		assertThat(output.collectList().block(Duration.ofMillis(5000)))
@@ -213,17 +224,21 @@ public class WebSocketIntegrationTests {
 			@Override
 			public Mono<Void> handle(WebSocketSession session) {
 				infoRef.set(session.getHandshakeInfo());
-				return session.receive().map(WebSocketMessage::getPayloadAsText).subscribeWith(output).then();
+				return session.receive().map(WebSocketMessage::getPayloadAsText)
+						.subscribeWith(output).then();
 			}
 		}).block(Duration.ofMillis(5000));
 
 		HandshakeInfo info = infoRef.get();
-		assertThat(info.getHeaders().getFirst("Upgrade")).isEqualToIgnoringCase("websocket");
+		assertThat(info.getHeaders().getFirst("Upgrade"))
+				.isEqualToIgnoringCase("websocket");
 
-		assertThat(info.getHeaders().getFirst("Sec-WebSocket-Protocol")).isEqualTo(protocol);
-		assertThat(info.getSubProtocol()).as("Wrong protocol accepted").isEqualTo(protocol);
-		assertThat(output.block(Duration.ofSeconds(5))).as("Wrong protocol detected on the server side")
+		assertThat(info.getHeaders().getFirst("Sec-WebSocket-Protocol"))
 				.isEqualTo(protocol);
+		assertThat(info.getSubProtocol()).as("Wrong protocol accepted")
+				.isEqualTo(protocol);
+		assertThat(output.block(Duration.ofSeconds(5)))
+				.as("Wrong protocol detected on the server side").isEqualTo(protocol);
 	}
 
 	@Test
@@ -233,8 +248,8 @@ public class WebSocketIntegrationTests {
 		headers.add("my-header", "my-value");
 		MonoProcessor<Object> output = MonoProcessor.create();
 
-		client.execute(getUrl("/custom-header"), headers,
-				session -> session.receive().map(WebSocketMessage::getPayloadAsText).subscribeWith(output).then())
+		client.execute(getUrl("/custom-header"), headers, session -> session.receive()
+				.map(WebSocketMessage::getPayloadAsText).subscribeWith(output).then())
 				.block(Duration.ofMillis(5000));
 
 		assertThat(output.block(Duration.ofMillis(5000))).isEqualTo("my-header:my-value");
@@ -244,9 +259,10 @@ public class WebSocketIntegrationTests {
 	public void sessionClosing() throws Exception {
 		this.client.execute(getUrl("/close"), session -> {
 			logger.debug("Starting..");
-			return session.receive().doOnNext(s -> logger.debug("inbound " + s)).then().doFinally(signalType -> {
-				logger.debug("Completed with: " + signalType);
-			});
+			return session.receive().doOnNext(s -> logger.debug("inbound " + s)).then()
+					.doFinally(signalType -> {
+						logger.debug("Completed with: " + signalType);
+					});
 		}).block(Duration.ofMillis(5000));
 	}
 
@@ -311,7 +327,8 @@ public class WebSocketIntegrationTests {
 			if (!StringUtils.hasText(protocol)) {
 				return Mono.error(new IllegalStateException("Missing protocol"));
 			}
-			List<String> protocols = session.getHandshakeInfo().getHeaders().get(SEC_WEBSOCKET_PROTOCOL);
+			List<String> protocols = session.getHandshakeInfo().getHeaders()
+					.get(SEC_WEBSOCKET_PROTOCOL);
 			assertThat(protocols).contains("echo-v1,echo-v2");
 			WebSocketMessage message = session.textMessage(protocol);
 			return doSend(session, Mono.just(message));
@@ -346,26 +363,27 @@ public class WebSocketIntegrationTests {
 	@Configuration(proxyBeanMethods = false)
 	@EnableAutoConfiguration
 	@Import(PermitAllSecurityConfiguration.class)
-	@LoadBalancerClient(name = "wsservice", configuration = LocalLoadBalancerClientConfiguration.class)
+	@RibbonClient(name = "wsservice",
+			configuration = LocalRibbonClientConfiguration.class)
 	protected static class GatewayConfig {
 
 		@Bean
 		public RouteLocator wsRouteLocator(RouteLocatorBuilder builder) {
-			return builder.routes().route(r -> r.path("/echoForHttp").uri("lb://wsservice"))
+			return builder.routes()
+					.route(r -> r.path("/echoForHttp").uri("lb://wsservice"))
 					.route(r -> r.alwaysTrue().uri("lb:ws://wsservice")).build();
 		}
 
 	}
 
-	public static class LocalLoadBalancerClientConfiguration {
+	public static class LocalRibbonClientConfiguration {
 
 		@Value("${ws.server.port}")
 		private int wsPort;
 
 		@Bean
-		public ServiceInstanceListSupplier staticServiceInstanceListSupplier(Environment env) {
-			return ServiceInstanceListSuppliers.from("wsservice",
-					new DefaultServiceInstance("wsservice-1", "wsservice", "localhost", wsPort, false));
+		public ServerList<Server> ribbonServerList() {
+			return new StaticServerList<>(new Server("localhost", this.wsPort));
 		}
 
 	}

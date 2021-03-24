@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import org.springframework.cloud.gateway.event.PredicateArgsEvent;
 import org.springframework.cloud.gateway.filter.WeightCalculatorWebFilter.GroupWeightConfig;
-import org.springframework.cloud.gateway.support.ConfigurationService;
 import org.springframework.cloud.gateway.support.WeightConfig;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
@@ -41,7 +40,7 @@ public class WeightCalculatorWebFilterTests {
 
 	@Test
 	public void testWeightCalculation() {
-		WeightCalculatorWebFilter filter = createFilter();
+		WeightCalculatorWebFilter filter = new WeightCalculatorWebFilter();
 
 		String grp1 = "group1";
 		String grp2 = "group2";
@@ -52,17 +51,16 @@ public class WeightCalculatorWebFilterTests {
 		assertWeightCalculation(filter, grp2, grp2idx++, 1, asList(1.0));
 		assertWeightCalculation(filter, grp1, grp1idx++, 3, asList(0.25, 0.75), 0.25);
 		assertWeightCalculation(filter, grp2, grp2idx++, 1, asList(0.5, 0.5), 0.5);
-		assertWeightCalculation(filter, grp1, grp1idx++, 6, asList(0.1, 0.3, 0.6), 0.1, 0.4);
-		assertWeightCalculation(filter, grp2, grp2idx++, 2, asList(0.25, 0.25, 0.5), 0.25, 0.5);
-		assertWeightCalculation(filter, grp2, grp2idx++, 4, asList(0.125, 0.125, 0.25, 0.5), 0.125, 0.25, 0.5);
+		assertWeightCalculation(filter, grp1, grp1idx++, 6, asList(0.1, 0.3, 0.6), 0.1,
+				0.4);
+		assertWeightCalculation(filter, grp2, grp2idx++, 2, asList(0.25, 0.25, 0.5), 0.25,
+				0.5);
+		assertWeightCalculation(filter, grp2, grp2idx++, 4,
+				asList(0.125, 0.125, 0.25, 0.5), 0.125, 0.25, 0.5);
 	}
 
-	private WeightCalculatorWebFilter createFilter() {
-		return new WeightCalculatorWebFilter(null, new ConfigurationService(null, () -> null, () -> null));
-	}
-
-	private void assertWeightCalculation(WeightCalculatorWebFilter filter, String group, int item, int weight,
-			List<Double> normalized, Double... middleRanges) {
+	private void assertWeightCalculation(WeightCalculatorWebFilter filter, String group,
+			int item, int weight, List<Double> normalized, Double... middleRanges) {
 		String routeId = route(item);
 
 		filter.addWeightConfig(new WeightConfig(group, routeId, weight));
@@ -76,7 +74,8 @@ public class WeightCalculatorWebFilterTests {
 		assertThat(config.normalizedWeights).hasSize(item);
 
 		for (int i = 0; i < normalized.size(); i++) {
-			assertThat(config.normalizedWeights).containsEntry(route(i + 1), normalized.get(i));
+			assertThat(config.normalizedWeights).containsEntry(route(i + 1),
+					normalized.get(i));
 		}
 
 		for (int i = 0; i < normalized.size(); i++) {
@@ -97,7 +96,7 @@ public class WeightCalculatorWebFilterTests {
 
 	@Test
 	public void testChooseRouteWithRandom() {
-		WeightCalculatorWebFilter filter = createFilter();
+		WeightCalculatorWebFilter filter = new WeightCalculatorWebFilter();
 		filter.addWeightConfig(new WeightConfig("groupa", "route1", 1));
 		filter.addWeightConfig(new WeightConfig("groupa", "route2", 3));
 		filter.addWeightConfig(new WeightConfig("groupa", "route3", 6));
@@ -144,10 +143,6 @@ public class WeightCalculatorWebFilterTests {
 	class TestWeightCalculatorWebFilter extends WeightCalculatorWebFilter {
 
 		private WeightConfig weightConfig;
-
-		TestWeightCalculatorWebFilter() {
-			super(null, new ConfigurationService(null, () -> null, () -> null));
-		}
 
 		@Override
 		void addWeightConfig(WeightConfig weightConfig) {

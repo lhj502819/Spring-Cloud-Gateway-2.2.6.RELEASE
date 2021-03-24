@@ -26,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.gateway.config.GatewayLoadBalancerProperties;
+import org.springframework.cloud.gateway.config.LoadBalancerProperties;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -36,22 +36,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ReactiveGatewayDiscoveryClientAutoConfigurationTests {
 
 	@RunWith(SpringRunner.class)
-	@SpringBootTest(classes = Config.class,
-			properties = { "spring.cloud.gateway.discovery.locator.enabled=true",
-					"spring.cloud.gateway.loadbalancer.use404=true",
-					"spring.cloud.discovery.client.simple.instances.service[0].uri=https://service1:443" })
+	@SpringBootTest(classes = Config.class, properties = {
+			"spring.cloud.gateway.discovery.locator.enabled=true",
+			"spring.cloud.gateway.loadbalancer.use404=true",
+			"spring.cloud.discovery.client.simple.instances.service[0].uri=https://service1:443" })
 	public static class EnabledByProperty {
 
 		@Autowired(required = false)
 		private DiscoveryClientRouteDefinitionLocator locator;
 
 		@Autowired(required = false)
-		private GatewayLoadBalancerProperties properties;
+		private LoadBalancerProperties properties;
 
 		@Test
 		public void routeLocatorBeanExists() {
-			assertThat(locator).as("DiscoveryClientRouteDefinitionLocator was null").isNotNull();
-			List<RouteDefinition> definitions = locator.getRouteDefinitions().collectList().block();
+			assertThat(locator).as("DiscoveryClientRouteDefinitionLocator was null")
+					.isNotNull();
+			List<RouteDefinition> definitions = locator.getRouteDefinitions()
+					.collectList().block();
 			assertThat(definitions).hasSize(1);
 		}
 
@@ -71,7 +73,8 @@ public class ReactiveGatewayDiscoveryClientAutoConfigurationTests {
 
 		@Test
 		public void routeLocatorBeanMissing() {
-			assertThat(locator).as("DiscoveryClientRouteDefinitionLocator exists").isNull();
+			assertThat(locator).as("DiscoveryClientRouteDefinitionLocator exists")
+					.isNull();
 		}
 
 	}

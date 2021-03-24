@@ -1,29 +1,27 @@
 version: 2
 jobs:
   build:
-    machine: true
-#    docker:
-#      - image: springcloud/pipeline-base
+    docker:
+      - image: springcloud/pipeline-base
+#        user: appuser
     environment:
       _JAVA_OPTIONS: "-Xms1024m -Xmx2048m"
-      CACHEVER: 3
       TERM: dumb
     branches:
       ignore:
         - gh-pages # list of branches to ignore
     steps:
       - checkout
-      - type: shell
-        name: "Write CACHEVER to file"
-        command: echo "$CACHEVER" > ~/CACHEVER.txt
       - restore_cache:
-          key: sc-gateway-{{ .Branch }}-{{ checksum "~/CACHEVER.txt" }}
+          key: sc-gateway-{{ .Branch }}
+      - run:
+          command: apt-get -y install redis-server
       - run:
           name: "Download dependencies"
           command: |
             ./mvnw -s .settings.xml -U --fail-never dependency:go-offline || true
       - save_cache:
-          key: sc-gateway-{{ .Branch }}-{{ checksum "~/CACHEVER.txt" }}
+          key: sc-gateway-{{ .Branch }}
           paths:
             - ~/.m2
       - run:

@@ -53,7 +53,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 	public void dedupNullName() {
 		filter.dedupe(headers, config);
 		Mockito.verify(headers, Mockito.never()).get(Mockito.anyString());
-		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
@@ -62,7 +63,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Mockito.when(headers.get(NAME_1)).thenReturn(null);
 		filter.dedupe(headers, config);
 		Mockito.verify(headers).get(NAME_1);
-		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
@@ -71,7 +73,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Mockito.when(headers.get(NAME_1)).thenReturn(new ArrayList<>());
 		filter.dedupe(headers, config);
 		Mockito.verify(headers).get(NAME_1);
-		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
@@ -80,7 +83,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Mockito.when(headers.get(NAME_1)).thenReturn(Arrays.asList("1"));
 		filter.dedupe(headers, config);
 		Mockito.verify(headers).get(NAME_1);
-		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(headers, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
@@ -93,7 +97,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Mockito.verify(headers).set(NAME_1, "2");
 		Mockito.verify(headers).get(NAME_2);
 		Mockito.verify(headers).set(NAME_2, "true");
-		Mockito.verify(headers, Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(headers, Mockito.times(2)).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
@@ -114,7 +119,8 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Mockito.when(headers.get(NAME_1)).thenReturn(Arrays.asList("2", "3", "3", "4"));
 		filter.dedupe(headers, config);
 		Mockito.verify(headers).get(NAME_1);
-		Mockito.verify(headers).put(Mockito.eq(NAME_1), Mockito.eq(Arrays.asList("2", "3", "4")));
+		Mockito.verify(headers).put(Mockito.eq(NAME_1),
+				Mockito.eq(Arrays.asList("2", "3", "4")));
 		Mockito.verify(headers).put(Mockito.anyString(), Mockito.anyList());
 	}
 
@@ -123,8 +129,10 @@ public class DedupeResponseHeaderGatewayFilterFactoryUnitTests {
 		Config config = new Config();
 		config.setName("myname");
 		config.setStrategy(Strategy.RETAIN_LAST);
-		GatewayFilter filter = new DedupeResponseHeaderGatewayFilterFactory().apply(config);
-		assertThat(filter.toString()).contains("myname").contains(Strategy.RETAIN_LAST.toString());
+		GatewayFilter filter = new DedupeResponseHeaderGatewayFilterFactory()
+				.apply(config);
+		assertThat(filter.toString()).contains("myname")
+				.contains(Strategy.RETAIN_LAST.toString());
 	}
 
 }

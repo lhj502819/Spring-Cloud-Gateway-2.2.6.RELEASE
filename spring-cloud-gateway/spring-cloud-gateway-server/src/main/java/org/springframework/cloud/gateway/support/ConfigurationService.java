@@ -54,18 +54,26 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 
 	private Supplier<Validator> validator;
 
-	public ConfigurationService(BeanFactory beanFactory, ObjectProvider<ConversionService> conversionService,
+	@Deprecated
+	public ConfigurationService() {
+		this.conversionService = () -> null;
+		this.validator = () -> null;
+	}
+
+	@Deprecated
+	public ConfigurationService(BeanFactory beanFactory,
+			ConversionService conversionService, Validator validator) {
+		this.beanFactory = beanFactory;
+		this.conversionService = () -> conversionService;
+		this.validator = () -> validator;
+	}
+
+	public ConfigurationService(BeanFactory beanFactory,
+			ObjectProvider<ConversionService> conversionService,
 			ObjectProvider<Validator> validator) {
 		this.beanFactory = beanFactory;
 		this.conversionService = conversionService::getIfAvailable;
 		this.validator = validator::getIfAvailable;
-	}
-
-	public ConfigurationService(BeanFactory beanFactory, Supplier<ConversionService> conversionService,
-			Supplier<Validator> validator) {
-		this.beanFactory = beanFactory;
-		this.conversionService = conversionService;
-		this.validator = validator;
 	}
 
 	public ApplicationEventPublisher getPublisher() {
@@ -77,7 +85,35 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		this.publisher = publisher;
 	}
 
-	public <T, C extends Configurable<T> & ShortcutConfigurable> ConfigurableBuilder<T, C> with(C configurable) {
+	public BeanFactory getBeanFactory() {
+		return this.beanFactory;
+	}
+
+	@Deprecated
+	public void setBeanFactory(BeanFactory beanFactory) {
+		this.beanFactory = beanFactory;
+	}
+
+	@Deprecated
+	public void setConversionService(ConversionService conversionService) {
+		this.conversionService = () -> conversionService;
+	}
+
+	public void setParser(SpelExpressionParser parser) {
+		this.parser = parser;
+	}
+
+	public Validator getValidator() {
+		return this.validator.get();
+	}
+
+	@Deprecated
+	public void setValidator(Validator validator) {
+		this.validator = () -> validator;
+	}
+
+	public <T, C extends Configurable<T> & ShortcutConfigurable> ConfigurableBuilder<T, C> with(
+			C configurable) {
 		return new ConfigurableBuilder<T, C>(this, configurable);
 	}
 
@@ -85,8 +121,10 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		return new InstanceBuilder<T>(this, instance);
 	}
 
-	/* for testing */ static <T> T bindOrCreate(Bindable<T> bindable, Map<String, Object> properties,
-			String configurationPropertyName, Validator validator, ConversionService conversionService) {
+	@Deprecated
+	public static <T> T bindOrCreate(Bindable<T> bindable, Map<String, Object> properties,
+			String configurationPropertyName, Validator validator,
+			ConversionService conversionService) {
 		// see ConfigurationPropertiesBinder from spring boot for this definition.
 		BindHandler handler = new IgnoreTopLevelConverterNotFoundBindHandler();
 
@@ -97,12 +135,13 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		List<ConfigurationPropertySource> propertySources = Collections
 				.singletonList(new MapConfigurationPropertySource(properties));
 
-		return new Binder(propertySources, null, conversionService).bindOrCreate(configurationPropertyName, bindable,
-				handler);
+		return new Binder(propertySources, null, conversionService)
+				.bindOrCreate(configurationPropertyName, bindable, handler);
 	}
 
+	@Deprecated
 	@SuppressWarnings("unchecked")
-	/* for testing */ static <T> T getTargetObject(Object candidate) {
+	public static <T> T getTargetObject(Object candidate) {
 		try {
 			if (AopUtils.isAopProxy(candidate) && (candidate instanceof Advised)) {
 				return (T) ((Advised) candidate).getTargetSource().getTarget();
@@ -137,8 +176,8 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		@Override
 		protected Map<String, Object> normalizeProperties() {
 			if (this.service.beanFactory != null) {
-				return this.configurable.shortcutType().normalize(this.properties, this.configurable,
-						this.service.parser, this.service.beanFactory);
+				return this.configurable.shortcutType().normalize(this.properties,
+						this.configurable, this.service.parser, this.service.beanFactory);
 			}
 			return super.normalizeProperties();
 		}
@@ -146,8 +185,10 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		@Override
 		protected T doBind() {
 			Bindable<T> bindable = Bindable.of(this.configurable.getConfigClass());
-			T bound = bindOrCreate(bindable, this.normalizedProperties, this.configurable.shortcutFieldPrefix(),
-					/* this.name, */this.service.validator.get(), this.service.conversionService.get());
+			T bound = bindOrCreate(bindable, this.normalizedProperties,
+					this.configurable.shortcutFieldPrefix(),
+					/* this.name, */this.service.validator.get(),
+					this.service.conversionService.get());
 
 			return bound;
 		}
@@ -177,8 +218,8 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 		protected T doBind() {
 			T toBind = getTargetObject(this.instance);
 			Bindable<T> bindable = Bindable.ofInstance(toBind);
-			return bindOrCreate(bindable, this.normalizedProperties, this.name, this.service.validator.get(),
-					this.service.conversionService.get());
+			return bindOrCreate(bindable, this.normalizedProperties, this.name,
+					this.service.validator.get(), this.service.conversionService.get());
 		}
 
 	}
@@ -206,7 +247,8 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 			return getThis();
 		}
 
-		public B eventFunction(BiFunction<T, Map<String, Object>, ApplicationEvent> eventFunction) {
+		public B eventFunction(
+				BiFunction<T, Map<String, Object>, ApplicationEvent> eventFunction) {
 			this.eventFunction = eventFunction;
 			return getThis();
 		}
@@ -244,7 +286,8 @@ public class ConfigurationService implements ApplicationEventPublisherAware {
 			T bound = doBind();
 
 			if (this.eventFunction != null && this.service.publisher != null) {
-				ApplicationEvent applicationEvent = this.eventFunction.apply(bound, this.normalizedProperties);
+				ApplicationEvent applicationEvent = this.eventFunction.apply(bound,
+						this.normalizedProperties);
 				this.service.publisher.publishEvent(applicationEvent);
 			}
 

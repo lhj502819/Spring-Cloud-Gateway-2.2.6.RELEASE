@@ -111,17 +111,19 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 		}
 		// MockServerHttpResponse creates these
 		else if (bufferFactory instanceof DefaultDataBufferFactory) {
-			DataBuffer buffer = ((DefaultDataBufferFactory) bufferFactory).allocateBuffer(byteBuf.readableBytes());
+			DataBuffer buffer = ((DefaultDataBufferFactory) bufferFactory)
+					.allocateBuffer(byteBuf.readableBytes());
 			buffer.write(byteBuf.nioBuffer());
 			byteBuf.release();
 			return buffer;
 		}
-		throw new IllegalArgumentException("Unkown DataBufferFactory type " + bufferFactory.getClass());
+		throw new IllegalArgumentException(
+				"Unkown DataBufferFactory type " + bufferFactory.getClass());
 	}
 
 	private void cleanup(ServerWebExchange exchange) {
 		Connection connection = exchange.getAttribute(CLIENT_RESPONSE_CONN_ATTR);
-		if (connection != null && connection.channel().isActive() && !connection.isPersistent()) {
+		if (connection != null) {
 			connection.dispose();
 		}
 	}
@@ -129,7 +131,8 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 	// TODO: use framework if possible
 	// TODO: port to WebClientWriteResponseFilter
 	private boolean isStreamingMediaType(@Nullable MediaType contentType) {
-		return (contentType != null && this.streamingMediaTypes.stream().anyMatch(contentType::isCompatibleWith));
+		return (contentType != null && this.streamingMediaTypes.stream()
+				.anyMatch(contentType::isCompatibleWith));
 	}
 
 }

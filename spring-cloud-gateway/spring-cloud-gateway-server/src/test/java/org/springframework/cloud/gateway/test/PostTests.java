@@ -32,6 +32,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.web.reactive.function.BodyExtractors.toMono;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -42,10 +43,12 @@ public class PostTests extends BaseWebClientTests {
 
 	@Test
 	public void postWorks() {
-		Mono<Map> result = webClient.post().uri("/post").header("Host", "www.example.org").bodyValue("testdata")
-				.retrieve().bodyToMono(Map.class);
+		Mono<Map> result = webClient.post().uri("/post").header("Host", "www.example.org")
+				.bodyValue("testdata").exchange()
+				.flatMap(response -> response.body(toMono(Map.class)));
 
-		StepVerifier.create(result).consumeNextWith(map -> assertThat(map).containsEntry("data", "testdata"))
+		StepVerifier.create(result)
+				.consumeNextWith(map -> assertThat(map).containsEntry("data", "testdata"))
 				.expectComplete().verify(DURATION);
 	}
 

@@ -97,7 +97,8 @@ public class WeightCalculatorWebFilterConcurrentTests {
 	}
 
 	private boolean isContinue() {
-		return (System.currentTimeMillis() - startTime) < TimeUnit.SECONDS.toMillis(maxTestTimeSeconds);
+		return (System.currentTimeMillis() - startTime) < TimeUnit.SECONDS
+				.toMillis(maxTestTimeSeconds);
 	}
 
 	private void generateEvents() {
@@ -110,7 +111,8 @@ public class WeightCalculatorWebFilterConcurrentTests {
 
 	private WeightDefinedEvent createWeightDefinedEvent() {
 		int weight = ThreadLocalRandom.current().nextInt() & Integer.MAX_VALUE;
-		WeightConfig config = new WeightConfig("group_1", UUID.randomUUID().toString(), weight);
+		WeightConfig config = new WeightConfig("group_1", UUID.randomUUID().toString(),
+				weight);
 		return new WeightDefinedEvent(new Object(), config);
 	}
 

@@ -28,7 +28,8 @@ import org.springframework.web.server.ServerWebExchange;
  * @see <a href="https://docs.cloudfoundry.org/services/route-services.html">Cloud Foundry
  * Route Service documentation</a>
  */
-public class CloudFoundryRouteServiceRoutePredicateFactory extends AbstractRoutePredicateFactory<Object> {
+public class CloudFoundryRouteServiceRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<Object> {
 
 	/**
 	 * Forwarded URL header name.
@@ -53,7 +54,8 @@ public class CloudFoundryRouteServiceRoutePredicateFactory extends AbstractRoute
 
 	@Override
 	public Predicate<ServerWebExchange> apply(Object unused) {
-		return headerPredicate(X_CF_FORWARDED_URL).and(headerPredicate(X_CF_PROXY_SIGNATURE))
+		return headerPredicate(X_CF_FORWARDED_URL)
+				.and(headerPredicate(X_CF_PROXY_SIGNATURE))
 				.and(headerPredicate(X_CF_PROXY_METADATA));
 	}
 

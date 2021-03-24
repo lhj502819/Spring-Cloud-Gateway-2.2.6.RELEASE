@@ -82,21 +82,24 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 	public void rewriteLocationNullLocation() {
 		setupTest(null, "host", "/path");
 		filter.rewriteLocation(exchange, config);
-		Mockito.verify(responseHeaders, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(responseHeaders, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
 	public void rewriteLocationNullHost() {
 		setupTest("location", null, "/path");
 		filter.rewriteLocation(exchange, config);
-		Mockito.verify(responseHeaders, Mockito.never()).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify(responseHeaders, Mockito.never()).set(Mockito.anyString(),
+				Mockito.anyString());
 	}
 
 	@Test
 	public void rewriteLocation() {
 		setupTest("location", "host", "/path");
 		filter.rewriteLocation(exchange, config);
-		Mockito.verify(responseHeaders).set(Mockito.eq("Location"), Mockito.eq("location"));
+		Mockito.verify(responseHeaders).set(Mockito.eq("Location"),
+				Mockito.eq("location"));
 	}
 
 	@Test
@@ -113,7 +116,8 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		setupTest("https://replaceme/some/path", "host", "/some/path");
 		config.setHostValue("different.host");
 		filter.rewriteLocation(exchange, config);
-		Mockito.verify(responseHeaders).set(Mockito.eq("Location"), Mockito.eq("https://different.host/some/path"));
+		Mockito.verify(responseHeaders).set(Mockito.eq("Location"),
+				Mockito.eq("https://different.host/some/path"));
 	}
 
 	@Test
@@ -121,7 +125,8 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		setupTest("https://replaceme/some/path", "host", "/some/path");
 		config.setProtocols("gopher|whatever");
 		filter.rewriteLocation(exchange, config);
-		Mockito.verify(responseHeaders).set(Mockito.eq("Location"), Mockito.eq("https://replaceme/some/path"));
+		Mockito.verify(responseHeaders).set(Mockito.eq("Location"),
+				Mockito.eq("https://replaceme/some/path"));
 	}
 
 	@Test
@@ -130,8 +135,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "example.com:443";
 		String path = "/v1/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.ALWAYS_STRIP, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://example.com:443/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.ALWAYS_STRIP,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://example.com:443/path/to/riches");
 	}
 
 	@Test
@@ -140,8 +146,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "example.com:443";
 		String path = "/v1/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://example.com:443/v1/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://example.com:443/v1/path/to/riches");
 	}
 
 	@Test
@@ -150,8 +157,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "example.com:443";
 		String path = "/v1/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.NEVER_STRIP, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://example.com:443/v1/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.NEVER_STRIP,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://example.com:443/v1/path/to/riches");
 	}
 
 	@Test
@@ -160,8 +168,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "api.example.com:443";
 		String path = "/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.ALWAYS_STRIP, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://api.example.com:443/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.ALWAYS_STRIP,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://api.example.com:443/path/to/riches");
 	}
 
 	@Test
@@ -170,8 +179,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "api.example.com:443";
 		String path = "/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://api.example.com:443/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://api.example.com:443/path/to/riches");
 	}
 
 	@Test
@@ -180,8 +190,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "api.example.com:443";
 		String path = "/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.NEVER_STRIP, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://api.example.com:443/v2/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.NEVER_STRIP,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://api.example.com:443/v2/path/to/riches");
 	}
 
 	@Test
@@ -190,8 +201,9 @@ public class RewriteLocationResponseHeaderGatewayFilterFactoryUnitTests {
 		String host = "api.example.com:443";
 		String path = "/path/to/riches";
 		setupTest(location, host, path);
-		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST, config.getHostPortPattern(),
-				config.getHostPortVersionPattern())).isEqualTo("https://api.example.com:443/path/to/riches");
+		assertThat(filter.fixedLocation(location, host, path, StripVersion.AS_IN_REQUEST,
+				config.getHostPortPattern(), config.getHostPortVersionPattern()))
+						.isEqualTo("https://api.example.com:443/path/to/riches");
 	}
 
 	@Test

@@ -16,7 +16,9 @@
 
 package org.springframework.cloud.gateway.test;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -25,14 +27,16 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.context.annotation.Bean;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 public class RouteConstructionIntegrationTests {
+
+	@Rule
+	public ExpectedException exception = ExpectedException.none();
 
 	@Test
 	public void routesWithVerificationShouldFail() {
-		assertThatThrownBy(() -> new SpringApplicationBuilder(TestConfig.class).profiles("verification-route").run())
-				.hasMessageContaining("Stop right now!");
+		exception.expect(Throwable.class);
+		new SpringApplicationBuilder(TestConfig.class).profiles("verification-route")
+				.run();
 	}
 
 	@EnableAutoConfiguration

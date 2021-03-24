@@ -30,7 +30,8 @@ import org.springframework.web.server.ServerWebExchange;
 /**
  * @author Spencer Gibb
  */
-public class BetweenRoutePredicateFactory extends AbstractRoutePredicateFactory<BetweenRoutePredicateFactory.Config> {
+public class BetweenRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<BetweenRoutePredicateFactory.Config> {
 
 	/**
 	 * DateTime 1 key.
@@ -60,12 +61,14 @@ public class BetweenRoutePredicateFactory extends AbstractRoutePredicateFactory<
 			@Override
 			public boolean test(ServerWebExchange serverWebExchange) {
 				final ZonedDateTime now = ZonedDateTime.now();
-				return now.isAfter(config.getDatetime1()) && now.isBefore(config.getDatetime2());
+				return now.isAfter(config.getDatetime1())
+						&& now.isBefore(config.getDatetime2());
 			}
 
 			@Override
 			public String toString() {
-				return String.format("Between: %s and %s", config.getDatetime1(), config.getDatetime2());
+				return String.format("Between: %s and %s", config.getDatetime1(),
+						config.getDatetime2());
 			}
 		};
 	}

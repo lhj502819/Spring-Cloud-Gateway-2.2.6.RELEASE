@@ -32,8 +32,8 @@ import static org.springframework.cloud.gateway.support.GatewayToStringStyler.fi
 /**
  * @author Tony Clarke
  */
-public class MapRequestHeaderGatewayFilterFactory
-		extends AbstractGatewayFilterFactory<MapRequestHeaderGatewayFilterFactory.Config> {
+public class MapRequestHeaderGatewayFilterFactory extends
+		AbstractGatewayFilterFactory<MapRequestHeaderGatewayFilterFactory.Config> {
 
 	/**
 	 * From Header key.
@@ -49,7 +49,6 @@ public class MapRequestHeaderGatewayFilterFactory
 		super(Config.class);
 	}
 
-	@Override
 	public List<String> shortcutFieldOrder() {
 		return Arrays.asList(FROM_HEADER_KEY, TO_HEADER_KEY);
 	}
@@ -58,14 +57,18 @@ public class MapRequestHeaderGatewayFilterFactory
 	public GatewayFilter apply(MapRequestHeaderGatewayFilterFactory.Config config) {
 		return new GatewayFilter() {
 			@Override
-			public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-				if (!exchange.getRequest().getHeaders().containsKey(config.getFromHeader())) {
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
+				if (!exchange.getRequest().getHeaders()
+						.containsKey(config.getFromHeader())) {
 					return chain.filter(exchange);
 				}
-				List<String> headerValues = exchange.getRequest().getHeaders().get(config.getFromHeader());
+				List<String> headerValues = exchange.getRequest().getHeaders()
+						.get(config.getFromHeader());
 
 				ServerHttpRequest request = exchange.getRequest().mutate()
-						.headers(i -> i.addAll(config.getToHeader(), headerValues)).build();
+						.headers(i -> i.addAll(config.getToHeader(), headerValues))
+						.build();
 
 				return chain.filter(exchange.mutate().request(request).build());
 			}

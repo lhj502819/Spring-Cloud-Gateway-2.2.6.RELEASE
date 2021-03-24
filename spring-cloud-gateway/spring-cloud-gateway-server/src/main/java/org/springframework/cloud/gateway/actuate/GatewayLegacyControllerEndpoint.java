@@ -45,17 +45,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class GatewayLegacyControllerEndpoint extends AbstractGatewayControllerEndpoint {
 
 	public GatewayLegacyControllerEndpoint(RouteDefinitionLocator routeDefinitionLocator,
-			List<GlobalFilter> globalFilters, List<GatewayFilterFactory> gatewayFilterFactories,
-			List<RoutePredicateFactory> routePredicates, RouteDefinitionWriter routeDefinitionWriter,
-			RouteLocator routeLocator) {
-		super(routeDefinitionLocator, globalFilters, gatewayFilterFactories, routePredicates, routeDefinitionWriter,
-				routeLocator);
+			List<GlobalFilter> globalFilters, List<GatewayFilterFactory> GatewayFilters,
+			List<RoutePredicateFactory> routePredicates,
+			RouteDefinitionWriter routeDefinitionWriter, RouteLocator routeLocator) {
+		super(routeDefinitionLocator, globalFilters, GatewayFilters, routePredicates,
+				routeDefinitionWriter, routeLocator);
 	}
 
 	@GetMapping("/routes")
 	public Mono<List<Map<String, Object>>> routes() {
-		Mono<Map<String, RouteDefinition>> routeDefs = this.routeDefinitionLocator.getRouteDefinitions()
-				.collectMap(RouteDefinition::getId);
+		Mono<Map<String, RouteDefinition>> routeDefs = this.routeDefinitionLocator
+				.getRouteDefinitions().collectMap(RouteDefinition::getId);
 		Mono<List<Route>> routes = this.routeLocator.getRoutes().collectList();
 		return Mono.zip(routeDefs, routes).map(tuple -> {
 			Map<String, RouteDefinition> defs = tuple.getT1();
@@ -102,8 +102,10 @@ public class GatewayLegacyControllerEndpoint extends AbstractGatewayControllerEn
 	@GetMapping("/routes/{id}")
 	public Mono<ResponseEntity<RouteDefinition>> route(@PathVariable String id) {
 		// TODO: missing RouteLocator
-		return this.routeDefinitionLocator.getRouteDefinitions().filter(route -> route.getId().equals(id))
-				.singleOrEmpty().map(ResponseEntity::ok).switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
+		return this.routeDefinitionLocator.getRouteDefinitions()
+				.filter(route -> route.getId().equals(id)).singleOrEmpty()
+				.map(ResponseEntity::ok)
+				.switchIfEmpty(Mono.just(ResponseEntity.notFound().build()));
 	}
 
 }

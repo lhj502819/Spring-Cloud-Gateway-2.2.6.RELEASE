@@ -35,9 +35,9 @@ import javax.validation.constraints.Max;
 
 import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.tcp.SslProvider;
-import reactor.netty.transport.ProxyProvider;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
 import org.springframework.boot.web.server.WebServerException;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.util.ResourceUtils;
@@ -77,9 +77,6 @@ public class HttpClientProperties {
 
 	/** Enables wiretap debugging for Netty HttpClient. */
 	private boolean wiretap;
-
-	/** Enables compression for Netty HttpClient. */
-	private boolean compression;
 
 	public Integer getConnectTimeout() {
 		return connectTimeout;
@@ -155,14 +152,6 @@ public class HttpClientProperties {
 		this.wiretap = wiretap;
 	}
 
-	public boolean isCompression() {
-		return compression;
-	}
-
-	public void setCompression(boolean compression) {
-		this.compression = compression;
-	}
-
 	@Override
 	public String toString() {
 		// @formatter:off
@@ -176,7 +165,6 @@ public class HttpClientProperties {
 				.append("ssl", ssl)
 				.append("websocket", websocket)
 				.append("wiretap", wiretap)
-				.append("compression", compression)
 				.toString();
 		// @formatter:on
 
@@ -210,12 +198,6 @@ public class HttpClientProperties {
 		 * time.
 		 */
 		private Duration maxLifeTime = null;
-
-		/**
-		 * Perform regular eviction checks in the background at a specified interval.
-		 * Disabled by default ({@link Duration#ZERO})
-		 */
-		private Duration evictionInterval = Duration.ZERO;
 
 		public PoolType getType() {
 			return type;
@@ -265,19 +247,12 @@ public class HttpClientProperties {
 			this.maxLifeTime = maxLifeTime;
 		}
 
-		public Duration getEvictionInterval() {
-			return evictionInterval;
-		}
-
-		public void setEvictionInterval(Duration evictionInterval) {
-			this.evictionInterval = evictionInterval;
-		}
-
 		@Override
 		public String toString() {
-			return "Pool{" + "type=" + type + ", name='" + name + '\'' + ", maxConnections=" + maxConnections
-					+ ", acquireTimeout=" + acquireTimeout + ", maxIdleTime=" + maxIdleTime + ", maxLifeTime="
-					+ maxLifeTime + ", evictionInterval=" + evictionInterval + '}';
+			return "Pool{" + "type=" + type + ", name='" + name + '\''
+					+ ", maxConnections=" + maxConnections + ", acquireTimeout="
+					+ acquireTimeout + ", maxIdleTime=" + maxIdleTime + ", maxLifeTime="
+					+ maxLifeTime + '}';
 		}
 
 		public enum PoolType {
@@ -303,9 +278,6 @@ public class HttpClientProperties {
 
 	public static class Proxy {
 
-		/** proxyType for proxy configuration of Netty HttpClient. */
-		private ProxyProvider.Proxy type = ProxyProvider.Proxy.HTTP;
-
 		/** Hostname for proxy configuration of Netty HttpClient. */
 		private String host;
 
@@ -323,14 +295,6 @@ public class HttpClientProperties {
 		 * reached directly, bypassing the proxy
 		 */
 		private String nonProxyHostsPattern;
-
-		public ProxyProvider.Proxy getType() {
-			return type;
-		}
-
-		public void setType(ProxyProvider.Proxy type) {
-			this.type = type;
-		}
 
 		public String getHost() {
 			return host;
@@ -374,9 +338,9 @@ public class HttpClientProperties {
 
 		@Override
 		public String toString() {
-			return "Proxy{" + "type='" + type + '\'' + "host='" + host + '\'' + ", port=" + port + ", username='"
-					+ username + '\'' + ", password='" + password + '\'' + ", nonProxyHostsPattern='"
-					+ nonProxyHostsPattern + '\'' + '}';
+			return "Proxy{" + "host='" + host + '\'' + ", port=" + port + ", username='"
+					+ username + '\'' + ", password='" + password + '\''
+					+ ", nonProxyHostsPattern='" + nonProxyHostsPattern + '\'' + '}';
 		}
 
 	}
@@ -470,7 +434,8 @@ public class HttpClientProperties {
 
 		public X509Certificate[] getTrustedX509CertificatesForTrustManager() {
 			try {
-				CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+				CertificateFactory certificateFactory = CertificateFactory
+						.getInstance("X.509");
 				ArrayList<Certificate> allCerts = new ArrayList<>();
 				for (String trustedCert : getTrustedX509Certificates()) {
 					try {
@@ -480,13 +445,15 @@ public class HttpClientProperties {
 						allCerts.addAll(certs);
 					}
 					catch (IOException e) {
-						throw new WebServerException("Could not load certificate '" + trustedCert + "'", e);
+						throw new WebServerException(
+								"Could not load certificate '" + trustedCert + "'", e);
 					}
 				}
 				return allCerts.toArray(new X509Certificate[allCerts.size()]);
 			}
 			catch (CertificateException e1) {
-				throw new WebServerException("Could not load CertificateFactory X.509", e1);
+				throw new WebServerException("Could not load CertificateFactory X.509",
+						e1);
 			}
 		}
 
@@ -495,7 +462,8 @@ public class HttpClientProperties {
 				if (getKeyStore() != null && getKeyStore().length() > 0) {
 					KeyManagerFactory keyManagerFactory = KeyManagerFactory
 							.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-					char[] keyPassword = getKeyPassword() != null ? getKeyPassword().toCharArray() : null;
+					char[] keyPassword = getKeyPassword() != null
+							? getKeyPassword().toCharArray() : null;
 
 					if (keyPassword == null && getKeyStorePassword() != null) {
 						keyPassword = getKeyStorePassword().toCharArray();
@@ -520,17 +488,19 @@ public class HttpClientProperties {
 						: KeyStore.getInstance(getKeyStoreType());
 				try {
 					URL url = ResourceUtils.getURL(getKeyStore());
-					store.load(url.openStream(),
-							getKeyStorePassword() != null ? getKeyStorePassword().toCharArray() : null);
+					store.load(url.openStream(), getKeyStorePassword() != null
+							? getKeyStorePassword().toCharArray() : null);
 				}
 				catch (Exception e) {
-					throw new WebServerException("Could not load key store ' " + getKeyStore() + "'", e);
+					throw new WebServerException(
+							"Could not load key store ' " + getKeyStore() + "'", e);
 				}
 
 				return store;
 			}
 			catch (KeyStoreException | NoSuchProviderException e) {
-				throw new WebServerException("Could not load KeyStore for given type and provider", e);
+				throw new WebServerException(
+						"Could not load KeyStore for given type and provider", e);
 			}
 		}
 
@@ -568,22 +538,61 @@ public class HttpClientProperties {
 			this.closeNotifyReadTimeout = closeNotifyReadTimeout;
 		}
 
+		@DeprecatedConfigurationProperty(
+				replacement = "spring.cloud.gateway.httpclient.ssl.handshake-timeout")
+		@Deprecated
+		public long getHandshakeTimeoutMillis() {
+			return getHandshakeTimeout().toMillis();
+		}
+
+		@Deprecated
+		public void setHandshakeTimeoutMillis(long handshakeTimeoutMillis) {
+			setHandshakeTimeout(Duration.ofMillis(handshakeTimeoutMillis));
+		}
+
+		@DeprecatedConfigurationProperty(
+				replacement = "spring.cloud.gateway.httpclient.ssl.close-notify-flush-timeout")
+		@Deprecated
+		public long getCloseNotifyFlushTimeoutMillis() {
+			return getCloseNotifyFlushTimeout().toMillis();
+		}
+
+		@Deprecated
+		public void setCloseNotifyFlushTimeoutMillis(long closeNotifyFlushTimeoutMillis) {
+			setCloseNotifyFlushTimeout(Duration.ofMillis(closeNotifyFlushTimeoutMillis));
+		}
+
+		@DeprecatedConfigurationProperty(
+				replacement = "spring.cloud.gateway.httpclient.ssl.close-notify-read-timeout")
+		@Deprecated
+		public long getCloseNotifyReadTimeoutMillis() {
+			return getCloseNotifyReadTimeout().toMillis();
+		}
+
+		@Deprecated
+		public void setCloseNotifyReadTimeoutMillis(long closeNotifyReadTimeoutMillis) {
+			setCloseNotifyFlushTimeout(Duration.ofMillis(closeNotifyReadTimeoutMillis));
+		}
+
 		public SslProvider.DefaultConfigurationType getDefaultConfigurationType() {
 			return defaultConfigurationType;
 		}
 
-		public void setDefaultConfigurationType(SslProvider.DefaultConfigurationType defaultConfigurationType) {
+		public void setDefaultConfigurationType(
+				SslProvider.DefaultConfigurationType defaultConfigurationType) {
 			this.defaultConfigurationType = defaultConfigurationType;
 		}
 
 		@Override
 		public String toString() {
-			return new ToStringCreator(this).append("useInsecureTrustManager", useInsecureTrustManager)
+			return new ToStringCreator(this)
+					.append("useInsecureTrustManager", useInsecureTrustManager)
 					.append("trustedX509Certificates", trustedX509Certificates)
 					.append("handshakeTimeout", handshakeTimeout)
 					.append("closeNotifyFlushTimeout", closeNotifyFlushTimeout)
 					.append("closeNotifyReadTimeout", closeNotifyReadTimeout)
-					.append("defaultConfigurationType", defaultConfigurationType).toString();
+					.append("defaultConfigurationType", defaultConfigurationType)
+					.toString();
 		}
 
 	}
@@ -614,7 +623,8 @@ public class HttpClientProperties {
 
 		@Override
 		public String toString() {
-			return new ToStringCreator(this).append("maxFramePayloadLength", maxFramePayloadLength)
+			return new ToStringCreator(this)
+					.append("maxFramePayloadLength", maxFramePayloadLength)
 					.append("proxyPing", proxyPing).toString();
 		}
 

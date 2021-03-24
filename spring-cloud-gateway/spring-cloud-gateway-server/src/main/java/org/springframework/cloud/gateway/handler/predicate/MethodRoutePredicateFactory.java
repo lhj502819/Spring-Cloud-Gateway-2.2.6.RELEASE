@@ -30,7 +30,14 @@ import static java.util.Arrays.stream;
  * @author Spencer Gibb
  * @author Dennis Menge
  */
-public class MethodRoutePredicateFactory extends AbstractRoutePredicateFactory<MethodRoutePredicateFactory.Config> {
+public class MethodRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<MethodRoutePredicateFactory.Config> {
+
+	/**
+	 * Method key.
+	 */
+	@Deprecated
+	public static final String METHOD_KEY = "method";
 
 	/**
 	 * Methods key.
@@ -57,7 +64,8 @@ public class MethodRoutePredicateFactory extends AbstractRoutePredicateFactory<M
 			@Override
 			public boolean test(ServerWebExchange exchange) {
 				HttpMethod requestMethod = exchange.getRequest().getMethod();
-				return stream(config.getMethods()).anyMatch(httpMethod -> httpMethod == requestMethod);
+				return stream(config.getMethods())
+						.anyMatch(httpMethod -> httpMethod == requestMethod);
 			}
 
 			@Override
@@ -71,6 +79,19 @@ public class MethodRoutePredicateFactory extends AbstractRoutePredicateFactory<M
 	public static class Config {
 
 		private HttpMethod[] methods;
+
+		@Deprecated
+		public HttpMethod getMethod() {
+			if (methods != null && methods.length > 0) {
+				return methods[0];
+			}
+			return null;
+		}
+
+		@Deprecated
+		public void setMethod(HttpMethod method) {
+			this.methods = new HttpMethod[] { method };
+		}
 
 		public HttpMethod[] getMethods() {
 			return methods;

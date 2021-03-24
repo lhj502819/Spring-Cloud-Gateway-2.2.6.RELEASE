@@ -35,19 +35,23 @@ import static org.springframework.cloud.gateway.support.GatewayToStringStyler.fi
  *
  * @author Greg Turnquist
  */
-public class SaveSessionGatewayFilterFactory extends AbstractGatewayFilterFactory<Object> {
+public class SaveSessionGatewayFilterFactory
+		extends AbstractGatewayFilterFactory<Object> {
 
 	@Override
 	public GatewayFilter apply(Object config) {
 		return new GatewayFilter() {
 			@Override
-			public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-				return exchange.getSession().map(WebSession::save).then(chain.filter(exchange));
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
+				return exchange.getSession().map(WebSession::save)
+						.then(chain.filter(exchange));
 			}
 
 			@Override
 			public String toString() {
-				return filterToStringCreator(SaveSessionGatewayFilterFactory.this).toString();
+				return filterToStringCreator(SaveSessionGatewayFilterFactory.this)
+						.toString();
 			}
 		};
 	}

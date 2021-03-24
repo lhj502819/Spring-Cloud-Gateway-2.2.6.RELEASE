@@ -36,7 +36,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.s
  * @author Spencer Gibb
  */
 @ConfigurationProperties("spring.cloud.gateway.set-status")
-public class SetStatusGatewayFilterFactory extends AbstractGatewayFilterFactory<SetStatusGatewayFilterFactory.Config> {
+public class SetStatusGatewayFilterFactory
+		extends AbstractGatewayFilterFactory<SetStatusGatewayFilterFactory.Config> {
 
 	/**
 	 * Status key.
@@ -63,7 +64,8 @@ public class SetStatusGatewayFilterFactory extends AbstractGatewayFilterFactory<
 
 		return new GatewayFilter() {
 			@Override
-			public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
 				// option 1 (runs in filter order)
 				/*
 				 * exchange.getResponse().beforeCommit(() -> {
@@ -76,7 +78,8 @@ public class SetStatusGatewayFilterFactory extends AbstractGatewayFilterFactory<
 					// check not really needed, since it is guarded in setStatusCode,
 					// but it's a good example
 					HttpStatus statusCode = exchange.getResponse().getStatusCode();
-					boolean isStatusCodeUpdated = setResponseStatus(exchange, statusHolder);
+					boolean isStatusCodeUpdated = setResponseStatus(exchange,
+							statusHolder);
 					if (isStatusCodeUpdated && originalStatusHeaderName != null) {
 						exchange.getResponse().getHeaders().set(originalStatusHeaderName,
 								singletonList(statusCode.value()).toString());
@@ -86,8 +89,8 @@ public class SetStatusGatewayFilterFactory extends AbstractGatewayFilterFactory<
 
 			@Override
 			public String toString() {
-				return filterToStringCreator(SetStatusGatewayFilterFactory.this).append("status", config.getStatus())
-						.toString();
+				return filterToStringCreator(SetStatusGatewayFilterFactory.this)
+						.append("status", config.getStatus()).toString();
 			}
 		};
 	}

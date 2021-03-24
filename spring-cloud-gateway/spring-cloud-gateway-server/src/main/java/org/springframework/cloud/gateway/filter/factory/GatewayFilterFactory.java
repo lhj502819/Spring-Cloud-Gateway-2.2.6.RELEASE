@@ -23,6 +23,7 @@ import org.springframework.cloud.gateway.support.Configurable;
 import org.springframework.cloud.gateway.support.HasRouteId;
 import org.springframework.cloud.gateway.support.NameUtils;
 import org.springframework.cloud.gateway.support.ShortcutConfigurable;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 
 /**
  * @author Spencer Gibb
@@ -75,6 +76,11 @@ public interface GatewayFilterFactory<C> extends ShortcutConfigurable, Configura
 	default String name() {
 		// TODO: deal with proxys
 		return NameUtils.normalizeFilterFactoryName(getClass());
+	}
+
+	@Deprecated
+	default ServerHttpRequest.Builder mutate(ServerHttpRequest request) {
+		return request.mutate();
 	}
 
 }

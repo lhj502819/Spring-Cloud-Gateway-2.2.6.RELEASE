@@ -69,7 +69,8 @@ public class ForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 	}
 
 	@Nullable
-	/* for testing */ static LinkedCaseInsensitiveMap<String> splitIntoCaseInsensitiveMap(String[] pairs) {
+	/* for testing */ static LinkedCaseInsensitiveMap<String> splitIntoCaseInsensitiveMap(
+			String[] pairs) {
 		if (ObjectUtils.isEmpty(pairs)) {
 			return null;
 		}
@@ -97,7 +98,8 @@ public class ForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 		HttpHeaders updated = new HttpHeaders();
 
 		// copy all headers except Forwarded
-		original.entrySet().stream().filter(entry -> !entry.getKey().toLowerCase().equalsIgnoreCase(FORWARDED_HEADER))
+		original.entrySet().stream().filter(
+				entry -> !entry.getKey().toLowerCase().equalsIgnoreCase(FORWARDED_HEADER))
 				.forEach(entry -> updated.addAll(entry.getKey(), entry.getValue()));
 
 		List<Forwarded> forwardeds = parse(original.get(FORWARDED_HEADER));
@@ -109,7 +111,8 @@ public class ForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 		// TODO: add new forwarded
 		URI uri = request.getURI();
 		String host = original.getFirst(HttpHeaders.HOST);
-		Forwarded forwarded = new Forwarded().put("host", host).put("proto", uri.getScheme());
+		Forwarded forwarded = new Forwarded().put("host", host).put("proto",
+				uri.getScheme());
 
 		InetSocketAddress remoteAddress = request.getRemoteAddress();
 		if (remoteAddress != null) {

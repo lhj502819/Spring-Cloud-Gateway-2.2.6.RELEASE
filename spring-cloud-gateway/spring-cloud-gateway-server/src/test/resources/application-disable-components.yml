@@ -3,8 +3,8 @@ server:
     include-message: always
 
 spring:
-  config:
-    import: classpath:application-logging.yml
+  profiles:
+    include: logging
 
   cloud:
     gateway:

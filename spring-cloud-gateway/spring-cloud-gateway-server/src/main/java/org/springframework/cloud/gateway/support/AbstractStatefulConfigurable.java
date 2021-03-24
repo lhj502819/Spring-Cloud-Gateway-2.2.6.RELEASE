@@ -37,7 +37,8 @@ public abstract class AbstractStatefulConfigurable<C> extends AbstractConfigurab
 
 	@Override
 	public String toString() {
-		return new ToStringCreator(this).append("config", config).append("configClass", getConfigClass()).toString();
+		return new ToStringCreator(this).append("config", config)
+				.append("configClass", getConfigClass()).toString();
 	}
 
 }

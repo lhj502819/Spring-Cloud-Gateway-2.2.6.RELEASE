@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.gateway.config;
+package org.springframework.cloud.gateway.handler.predicate;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import java.util.List;
+
+import org.springframework.http.codec.HttpMessageReader;
 
 /**
- * @author Ryan Baxter
+ * Predicate that reads the body and applies a user provided predicate to run on the body.
+ * The body is cached in memory so that possible subsequent calls to the predicate do not
+ * need to deserialize again.
  */
-@ConfigurationProperties("spring.cloud.gateway.loadbalancer")
-public class GatewayLoadBalancerProperties {
+@Deprecated
+public class ReadBodyPredicateFactory extends ReadBodyRoutePredicateFactory {
 
-	private boolean use404;
-
-	public boolean isUse404() {
-		return use404;
+	public ReadBodyPredicateFactory() {
 	}
 
-	public void setUse404(boolean use404) {
-		this.use404 = use404;
+	public ReadBodyPredicateFactory(List<HttpMessageReader<?>> messageReaders) {
+		super(messageReaders);
 	}
 
 }

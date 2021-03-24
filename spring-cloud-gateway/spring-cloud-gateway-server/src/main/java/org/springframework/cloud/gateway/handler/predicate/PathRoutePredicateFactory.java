@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.server.PathContainer;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.pattern.PathPattern;
@@ -38,13 +39,13 @@ import static org.springframework.http.server.PathContainer.parsePath;
 
 /**
  * @author Spencer Gibb
- * @author Dhawal Kapil
  */
-public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<PathRoutePredicateFactory.Config> {
+public class PathRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<PathRoutePredicateFactory.Config> {
 
-	private static final Log log = LogFactory.getLog(PathRoutePredicateFactory.class);
+	private static final Log log = LogFactory.getLog(RoutePredicateFactory.class);
 
-	private static final String MATCH_TRAILING_SLASH = "matchTrailingSlash";
+	private static final String MATCH_OPTIONAL_TRAILING_SEPARATOR_KEY = "matchOptionalTrailingSeparator";
 
 	private PathPatternParser pathPatternParser = new PathPatternParser();
 
@@ -52,10 +53,11 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 		super(Config.class);
 	}
 
-	private static void traceMatch(String prefix, Object desired, Object actual, boolean match) {
+	private static void traceMatch(String prefix, Object desired, Object actual,
+			boolean match) {
 		if (log.isTraceEnabled()) {
-			String message = String.format("%s \"%s\" %s against value \"%s\"", prefix, desired,
-					match ? "matches" : "does not match", actual);
+			String message = String.format("%s \"%s\" %s against value \"%s\"", prefix,
+					desired, match ? "matches" : "does not match", actual);
 			log.trace(message);
 		}
 	}
@@ -66,7 +68,7 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 
 	@Override
 	public List<String> shortcutFieldOrder() {
-		return Arrays.asList("patterns", MATCH_TRAILING_SLASH);
+		return Arrays.asList("patterns", MATCH_OPTIONAL_TRAILING_SEPARATOR_KEY);
 	}
 
 	@Override
@@ -78,7 +80,8 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 	public Predicate<ServerWebExchange> apply(Config config) {
 		final ArrayList<PathPattern> pathPatterns = new ArrayList<>();
 		synchronized (this.pathPatternParser) {
-			pathPatternParser.setMatchOptionalTrailingSeparator(config.isMatchTrailingSlash());
+			pathPatternParser.setMatchOptionalTrailingSeparator(
+					config.isMatchOptionalTrailingSeparator());
 			config.getPatterns().forEach(pattern -> {
 				PathPattern pathPattern = this.pathPatternParser.parse(pattern);
 				pathPatterns.add(pathPattern);
@@ -87,7 +90,8 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 		return new GatewayPredicate() {
 			@Override
 			public boolean test(ServerWebExchange exchange) {
-				PathContainer path = parsePath(exchange.getRequest().getURI().getRawPath());
+				PathContainer path = parsePath(
+						exchange.getRequest().getURI().getRawPath());
 
 				Optional<PathPattern> optionalPathPattern = pathPatterns.stream()
 						.filter(pattern -> pattern.matches(path)).findFirst();
@@ -107,8 +111,8 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 
 			@Override
 			public String toString() {
-				return String.format("Paths: %s, match trailing slash: %b", config.getPatterns(),
-						config.isMatchTrailingSlash());
+				return String.format("Paths: %s, match trailing slash: %b",
+						config.getPatterns(), config.isMatchOptionalTrailingSeparator());
 			}
 		};
 	}
@@ -118,7 +122,22 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 
 		private List<String> patterns = new ArrayList<>();
 
-		private boolean matchTrailingSlash = true;
+		private boolean matchOptionalTrailingSeparator = true;
+
+		@Deprecated
+		public String getPattern() {
+			if (!CollectionUtils.isEmpty(this.patterns)) {
+				return patterns.get(0);
+			}
+			return null;
+		}
+
+		@Deprecated
+		public Config setPattern(String pattern) {
+			this.patterns = new ArrayList<>();
+			this.patterns.add(pattern);
+			return this;
+		}
 
 		public List<String> getPatterns() {
 			return patterns;
@@ -129,36 +148,22 @@ public class PathRoutePredicateFactory extends AbstractRoutePredicateFactory<Pat
 			return this;
 		}
 
-		/**
-		 * @deprecated use {@link #isMatchTrailingSlash()}
-		 */
-		@Deprecated
 		public boolean isMatchOptionalTrailingSeparator() {
-			return isMatchTrailingSlash();
+			return matchOptionalTrailingSeparator;
 		}
 
-		/**
-		 * @deprecated use {@link #setMatchTrailingSlash(boolean)}
-		 */
-		@Deprecated
-		public Config setMatchOptionalTrailingSeparator(boolean matchOptionalTrailingSeparator) {
-			setMatchTrailingSlash(matchOptionalTrailingSeparator);
-			return this;
-		}
-
-		public boolean isMatchTrailingSlash() {
-			return matchTrailingSlash;
-		}
-
-		public Config setMatchTrailingSlash(boolean matchTrailingSlash) {
-			this.matchTrailingSlash = matchTrailingSlash;
+		public Config setMatchOptionalTrailingSeparator(
+				boolean matchOptionalTrailingSeparator) {
+			this.matchOptionalTrailingSeparator = matchOptionalTrailingSeparator;
 			return this;
 		}
 
 		@Override
 		public String toString() {
 			return new ToStringCreator(this).append("patterns", patterns)
-					.append(MATCH_TRAILING_SLASH, matchTrailingSlash).toString();
+					.append("matchOptionalTrailingSeparator",
+							matchOptionalTrailingSeparator)
+					.toString();
 		}
 
 	}

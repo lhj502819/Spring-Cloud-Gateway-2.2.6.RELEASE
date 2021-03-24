@@ -36,7 +36,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.SocketUtils;
 
 @RunWith(ModifiedClassPathRunner.class)
-@ClassPathExclusions({ "spring-cloud-loadbalancer-*.jar" })
+@ClassPathExclusions({ "spring-cloud-netflix-ribbon-*.jar",
+		"spring-cloud-loadbalancer-*.jar" })
 public class GatewayNoLoadBalancerClientAutoConfigurationTests {
 
 	private static int port;
@@ -48,10 +49,13 @@ public class GatewayNoLoadBalancerClientAutoConfigurationTests {
 
 	@Test
 	public void noLoadBalancerClientReportsError() {
-		try (ConfigurableApplicationContext context = new SpringApplication(Config.class).run("--server.port=" + port,
-				"--spring.jmx.enabled=false")) {
-			WebTestClient client = WebTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
-			client.get().header(HttpHeaders.HOST, "www.lbfail.org").exchange().expectStatus().is5xxServerError();
+		try (ConfigurableApplicationContext context = new SpringApplication(Config.class)
+				.run("--server.port=" + port, "--spring.jmx.enabled=false",
+						"--debug=true")) {
+			WebTestClient client = WebTestClient.bindToServer()
+					.baseUrl("http://localhost:" + port).build();
+			client.get().header(HttpHeaders.HOST, "www.lbfail.org").exchange()
+					.expectStatus().is5xxServerError();
 		}
 	}
 
@@ -61,8 +65,10 @@ public class GatewayNoLoadBalancerClientAutoConfigurationTests {
 	public static class Config {
 
 		@Bean
-		public RouteLocator routeLocator(RouteLocatorBuilder builder) {
-			return builder.routes().route("lb_fail", r -> r.host("**.lbfail.org").uri("lb://fail")).build();
+		public RouteLocator hystrixRouteLocator(RouteLocatorBuilder builder) {
+			return builder.routes()
+					.route("lb_fail", r -> r.host("**.lbfail.org").uri("lb://fail"))
+					.build();
 		}
 
 	}

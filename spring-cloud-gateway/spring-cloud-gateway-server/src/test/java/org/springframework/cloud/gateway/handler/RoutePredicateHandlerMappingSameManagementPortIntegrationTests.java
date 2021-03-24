@@ -35,7 +35,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = DEFINED_PORT)
 @DirtiesContext
-public class RoutePredicateHandlerMappingSameManagementPortIntegrationTests extends BaseWebClientTests {
+public class RoutePredicateHandlerMappingSameManagementPortIntegrationTests
+		extends BaseWebClientTests {
 
 	private static int samePort;
 
@@ -54,8 +55,8 @@ public class RoutePredicateHandlerMappingSameManagementPortIntegrationTests exte
 
 	@Test
 	public void requestsToGatewaySucceed() {
-		testClient.mutate().baseUrl("http://localhost:" + samePort).build().get().uri("/get").exchange().expectStatus()
-				.isOk();
+		testClient.mutate().baseUrl("http://localhost:" + samePort).build().get()
+				.uri("/get").exchange().expectStatus().isOk();
 	}
 
 	@EnableAutoConfiguration

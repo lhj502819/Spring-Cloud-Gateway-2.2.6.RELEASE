@@ -36,7 +36,8 @@ public class RewritePathGatewayFilterFactoryIntegrationTests extends BaseWebClie
 
 	@Test
 	public void rewritePathFilterWorks() {
-		testClient.get().uri("/foo/get").header("Host", "www.baz.org").exchange().expectStatus().isOk();
+		testClient.get().uri("/foo/get").header("Host", "www.baz.org").exchange()
+				.expectStatus().isOk();
 	}
 
 	@EnableAutoConfiguration

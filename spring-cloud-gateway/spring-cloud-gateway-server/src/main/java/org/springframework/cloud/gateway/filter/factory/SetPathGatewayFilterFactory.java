@@ -37,7 +37,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.g
 /**
  * @author Spencer Gibb
  */
-public class SetPathGatewayFilterFactory extends AbstractGatewayFilterFactory<SetPathGatewayFilterFactory.Config> {
+public class SetPathGatewayFilterFactory
+		extends AbstractGatewayFilterFactory<SetPathGatewayFilterFactory.Config> {
 
 	/**
 	 * Template key.
@@ -59,7 +60,8 @@ public class SetPathGatewayFilterFactory extends AbstractGatewayFilterFactory<Se
 
 		return new GatewayFilter() {
 			@Override
-			public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
 				ServerHttpRequest req = exchange.getRequest();
 				addOriginalRequestUrl(exchange, req.getURI());
 
@@ -77,8 +79,8 @@ public class SetPathGatewayFilterFactory extends AbstractGatewayFilterFactory<Se
 
 			@Override
 			public String toString() {
-				return filterToStringCreator(SetPathGatewayFilterFactory.this).append("template", config.getTemplate())
-						.toString();
+				return filterToStringCreator(SetPathGatewayFilterFactory.this)
+						.append("template", config.getTemplate()).toString();
 			}
 		};
 	}

@@ -26,7 +26,8 @@ import org.springframework.web.server.ServerWebExchange;
 /**
  * @author Spencer Gibb
  */
-public class BeforeRoutePredicateFactory extends AbstractRoutePredicateFactory<BeforeRoutePredicateFactory.Config> {
+public class BeforeRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<BeforeRoutePredicateFactory.Config> {
 
 	/**
 	 * DateTime key.

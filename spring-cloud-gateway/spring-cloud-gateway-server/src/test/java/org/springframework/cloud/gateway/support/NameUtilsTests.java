@@ -30,6 +30,7 @@ import org.springframework.cloud.gateway.filter.factory.AddRequestHeaderGatewayF
 import org.springframework.cloud.gateway.filter.factory.DedupeResponseHeaderGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.factory.FallbackHeadersGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.factory.GatewayFilterFactory;
+import org.springframework.cloud.gateway.filter.factory.HystrixGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.factory.MapRequestHeaderGatewayFilterFactory;
 import org.springframework.cloud.gateway.handler.predicate.AfterRoutePredicateFactory;
 import org.springframework.cloud.gateway.handler.predicate.CloudFoundryRouteServiceRoutePredicateFactory;
@@ -43,28 +44,35 @@ class NameUtilsTests {
 
 	@Test
 	void shouldNormalizePredicatesNames() {
-		List<Class<? extends RoutePredicateFactory<?>>> predicates = Arrays.asList(AfterRoutePredicateFactory.class,
-				CloudFoundryRouteServiceRoutePredicateFactory.class, ReadBodyRoutePredicateFactory.class,
+		List<Class<? extends RoutePredicateFactory<?>>> predicates = Arrays.asList(
+				AfterRoutePredicateFactory.class,
+				CloudFoundryRouteServiceRoutePredicateFactory.class,
+				ReadBodyRoutePredicateFactory.class,
 				RemoteAddrRoutePredicateFactory.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeRoutePredicateName)
-				.collect(Collectors.toList());
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeRoutePredicateName).collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("After", "CloudFoundryRouteService", "ReadBody", "RemoteAddr");
+		List<String> expectedNames = Arrays.asList("After", "CloudFoundryRouteService",
+				"ReadBody", "RemoteAddr");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
 	}
 
 	@Test
 	void shouldNormalizePredicatesNamesAsProperties() {
-		List<Class<? extends RoutePredicateFactory<?>>> predicates = Arrays.asList(AfterRoutePredicateFactory.class,
-				CloudFoundryRouteServiceRoutePredicateFactory.class, ReadBodyRoutePredicateFactory.class,
+		List<Class<? extends RoutePredicateFactory<?>>> predicates = Arrays.asList(
+				AfterRoutePredicateFactory.class,
+				CloudFoundryRouteServiceRoutePredicateFactory.class,
+				ReadBodyRoutePredicateFactory.class,
 				RemoteAddrRoutePredicateFactory.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeRoutePredicateNameAsProperty)
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeRoutePredicateNameAsProperty)
 				.collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("after", "cloud-foundry-route-service", "read-body", "remote-addr");
+		List<String> expectedNames = Arrays.asList("after", "cloud-foundry-route-service",
+				"read-body", "remote-addr");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
 	}
@@ -72,14 +80,17 @@ class NameUtilsTests {
 	@Test
 	void shouldNormalizeFiltersNames() {
 		List<Class<? extends GatewayFilterFactory<?>>> predicates = Arrays.asList(
-				AddRequestHeaderGatewayFilterFactory.class, DedupeResponseHeaderGatewayFilterFactory.class,
-				FallbackHeadersGatewayFilterFactory.class, MapRequestHeaderGatewayFilterFactory.class);
+				AddRequestHeaderGatewayFilterFactory.class,
+				DedupeResponseHeaderGatewayFilterFactory.class,
+				FallbackHeadersGatewayFilterFactory.class,
+				HystrixGatewayFilterFactory.class,
+				MapRequestHeaderGatewayFilterFactory.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeFilterFactoryName)
-				.collect(Collectors.toList());
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeFilterFactoryName).collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("AddRequestHeader", "DedupeResponseHeader", "FallbackHeaders",
-				"MapRequestHeader");
+		List<String> expectedNames = Arrays.asList("AddRequestHeader",
+				"DedupeResponseHeader", "FallbackHeaders", "Hystrix", "MapRequestHeader");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
 	}
@@ -87,13 +98,18 @@ class NameUtilsTests {
 	@Test
 	void shouldNormalizeFiltersNamesAsProperties() {
 		List<Class<? extends GatewayFilterFactory<?>>> predicates = Arrays.asList(
-				AddRequestHeaderGatewayFilterFactory.class, DedupeResponseHeaderGatewayFilterFactory.class,
-				FallbackHeadersGatewayFilterFactory.class, MapRequestHeaderGatewayFilterFactory.class);
+				AddRequestHeaderGatewayFilterFactory.class,
+				DedupeResponseHeaderGatewayFilterFactory.class,
+				FallbackHeadersGatewayFilterFactory.class,
+				HystrixGatewayFilterFactory.class,
+				MapRequestHeaderGatewayFilterFactory.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeFilterFactoryNameAsProperty)
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeFilterFactoryNameAsProperty)
 				.collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("add-request-header", "dedupe-response-header", "fallback-headers",
+		List<String> expectedNames = Arrays.asList("add-request-header",
+				"dedupe-response-header", "fallback-headers", "hystrix",
 				"map-request-header");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
@@ -101,26 +117,31 @@ class NameUtilsTests {
 
 	@Test
 	void shouldNormalizeGlobalFiltersNames() {
-		List<Class<? extends GlobalFilter>> predicates = Arrays.asList(ForwardPathFilter.class,
-				AdaptCachedBodyGlobalFilter.class, WebsocketRoutingFilter.class);
+		List<Class<? extends GlobalFilter>> predicates = Arrays.asList(
+				ForwardPathFilter.class, AdaptCachedBodyGlobalFilter.class,
+				WebsocketRoutingFilter.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeGlobalFilterName)
-				.collect(Collectors.toList());
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeGlobalFilterName).collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("ForwardPath", "AdaptCachedBody", "WebsocketRouting");
+		List<String> expectedNames = Arrays.asList("ForwardPath", "AdaptCachedBody",
+				"WebsocketRouting");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
 	}
 
 	@Test
 	void shouldNormalizeGlobalFiltersNamesAsProperties() {
-		List<Class<? extends GlobalFilter>> predicates = Arrays.asList(ForwardPathFilter.class,
-				AdaptCachedBodyGlobalFilter.class, WebsocketRoutingFilter.class);
+		List<Class<? extends GlobalFilter>> predicates = Arrays.asList(
+				ForwardPathFilter.class, AdaptCachedBodyGlobalFilter.class,
+				WebsocketRoutingFilter.class);
 
-		List<String> resultNames = predicates.stream().map(NameUtils::normalizeGlobalFilterNameAsProperty)
+		List<String> resultNames = predicates.stream()
+				.map(NameUtils::normalizeGlobalFilterNameAsProperty)
 				.collect(Collectors.toList());
 
-		List<String> expectedNames = Arrays.asList("forward-path", "adapt-cached-body", "websocket-routing");
+		List<String> expectedNames = Arrays.asList("forward-path", "adapt-cached-body",
+				"websocket-routing");
 
 		assertThat(resultNames).isEqualTo(expectedNames);
 	}

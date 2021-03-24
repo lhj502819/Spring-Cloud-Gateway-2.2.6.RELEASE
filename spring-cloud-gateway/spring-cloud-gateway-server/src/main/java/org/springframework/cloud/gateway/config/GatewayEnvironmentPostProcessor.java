@@ -26,9 +26,11 @@ import org.springframework.core.env.MapPropertySource;
 public class GatewayEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
 	@Override
-	public void postProcessEnvironment(ConfigurableEnvironment env, SpringApplication application) {
-		env.getPropertySources().addFirst(new MapPropertySource("gateway-properties",
-				Collections.singletonMap("spring.webflux.hiddenmethod.filter.enabled", "false")));
+	public void postProcessEnvironment(ConfigurableEnvironment env,
+			SpringApplication application) {
+		env.getPropertySources().addFirst(
+				new MapPropertySource("gateway-properties", Collections.singletonMap(
+						"spring.webflux.hiddenmethod.filter.enabled", "false")));
 	}
 
 }

@@ -37,8 +37,8 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 /**
  * @author Spencer Gibb
  */
-public class CachingRouteLocator
-		implements Ordered, RouteLocator, ApplicationListener<RefreshRoutesEvent>, ApplicationEventPublisherAware {
+public class CachingRouteLocator implements Ordered, RouteLocator,
+		ApplicationListener<RefreshRoutesEvent>, ApplicationEventPublisherAware {
 
 	private static final Log log = LogFactory.getLog(CachingRouteLocator.class);
 
@@ -54,7 +54,8 @@ public class CachingRouteLocator
 
 	public CachingRouteLocator(RouteLocator delegate) {
 		this.delegate = delegate;
-		routes = CacheFlux.lookup(cache, CACHE_KEY, Route.class).onCacheMissResume(this::fetch);
+		routes = CacheFlux.lookup(cache, CACHE_KEY, Route.class)
+				.onCacheMissResume(this::fetch);
 	}
 
 	private Flux<Route> fetch() {
@@ -78,11 +79,12 @@ public class CachingRouteLocator
 	@Override
 	public void onApplicationEvent(RefreshRoutesEvent event) {
 		try {
-			fetch().collect(Collectors.toList()).subscribe(
-					list -> Flux.fromIterable(list).materialize().collect(Collectors.toList()).subscribe(signals -> {
-						applicationEventPublisher.publishEvent(new RefreshRoutesResultEvent(this));
+			fetch().collect(Collectors.toList()).subscribe(list -> Flux.fromIterable(list)
+					.materialize().collect(Collectors.toList()).subscribe(signals -> {
+						applicationEventPublisher
+								.publishEvent(new RefreshRoutesResultEvent(this));
 						cache.put(CACHE_KEY, signals);
-					}, this::handleRefreshError), this::handleRefreshError);
+					}, throwable -> handleRefreshError(throwable)));
 		}
 		catch (Throwable e) {
 			handleRefreshError(e);
@@ -93,7 +95,13 @@ public class CachingRouteLocator
 		if (log.isErrorEnabled()) {
 			log.error("Refresh routes error !!!", throwable);
 		}
-		applicationEventPublisher.publishEvent(new RefreshRoutesResultEvent(this, throwable));
+		applicationEventPublisher
+				.publishEvent(new RefreshRoutesResultEvent(this, throwable));
+	}
+
+	@Deprecated
+	/* for testing */ void handleRefresh() {
+		refresh();
 	}
 
 	@Override
@@ -102,7 +110,8 @@ public class CachingRouteLocator
 	}
 
 	@Override
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+	public void setApplicationEventPublisher(
+			ApplicationEventPublisher applicationEventPublisher) {
 		this.applicationEventPublisher = applicationEventPublisher;
 	}
 

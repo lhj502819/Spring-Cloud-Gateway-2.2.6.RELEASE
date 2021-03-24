@@ -23,7 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.cloud.gateway.support.NotFoundException;
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import static java.util.Collections.synchronizedMap;
 
@@ -32,12 +32,13 @@ import static java.util.Collections.synchronizedMap;
  */
 public class InMemoryRouteDefinitionRepository implements RouteDefinitionRepository {
 
-	private final Map<String, RouteDefinition> routes = synchronizedMap(new LinkedHashMap<String, RouteDefinition>());
+	private final Map<String, RouteDefinition> routes = synchronizedMap(
+			new LinkedHashMap<String, RouteDefinition>());
 
 	@Override
 	public Mono<Void> save(Mono<RouteDefinition> route) {
 		return route.flatMap(r -> {
-			if (ObjectUtils.isEmpty(r.getId())) {
+			if (StringUtils.isEmpty(r.getId())) {
 				return Mono.error(new IllegalArgumentException("id may not be empty"));
 			}
 			routes.put(r.getId(), r);
@@ -52,7 +53,8 @@ public class InMemoryRouteDefinitionRepository implements RouteDefinitionReposit
 				routes.remove(id);
 				return Mono.empty();
 			}
-			return Mono.defer(() -> Mono.error(new NotFoundException("RouteDefinition not found: " + routeId)));
+			return Mono.defer(() -> Mono.error(
+					new NotFoundException("RouteDefinition not found: " + routeId)));
 		});
 	}
 

@@ -18,6 +18,8 @@ package org.springframework.cloud.gateway.test;
 
 import java.time.Duration;
 
+import com.netflix.loadbalancer.Server;
+import com.netflix.loadbalancer.ServerList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Before;
@@ -26,13 +28,12 @@ import reactor.core.publisher.Mono;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.route.Route;
-import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
-import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
-import org.springframework.cloud.loadbalancer.support.ServiceInstanceListSuppliers;
+import org.springframework.cloud.netflix.ribbon.RibbonClient;
+import org.springframework.cloud.netflix.ribbon.RibbonClients;
+import org.springframework.cloud.netflix.ribbon.StaticServerList;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -57,8 +58,6 @@ public class BaseWebClientTests {
 
 	protected static final Duration DURATION = Duration.ofSeconds(5);
 
-	public static final String SERVICE_ID = "testservice";
-
 	@LocalServerPort
 	protected int port = 0;
 
@@ -75,12 +74,15 @@ public class BaseWebClientTests {
 
 	protected void setup(ClientHttpConnector httpConnector, String baseUri) {
 		this.baseUri = baseUri;
-		this.webClient = WebClient.builder().clientConnector(httpConnector).baseUrl(this.baseUri).build();
-		this.testClient = WebTestClient.bindToServer(httpConnector).baseUrl(this.baseUri).build();
+		this.webClient = WebClient.builder().clientConnector(httpConnector)
+				.baseUrl(this.baseUri).build();
+		this.testClient = WebTestClient.bindToServer(httpConnector).baseUrl(this.baseUri)
+				.build();
 	}
 
 	@Configuration(proxyBeanMethods = false)
-	@LoadBalancerClient(name = "testservice", configuration = TestLoadBalancerConfig.class)
+	@RibbonClients({
+			@RibbonClient(name = "testservice", configuration = TestRibbonConfig.class) })
 	@Import(PermitAllSecurityConfiguration.class)
 	public static class DefaultTestConfig {
 
@@ -101,14 +103,16 @@ public class BaseWebClientTests {
 		public GlobalFilter modifyResponseFilter() {
 			return (exchange, chain) -> {
 				log.info("modifyResponseFilter start");
-				String value = exchange.getAttributeOrDefault(GATEWAY_HANDLER_MAPPER_ATTR, "N/A");
+				String value = exchange.getAttributeOrDefault(GATEWAY_HANDLER_MAPPER_ATTR,
+						"N/A");
 				if (!exchange.getResponse().isCommitted()) {
 					exchange.getResponse().getHeaders().add(HANDLER_MAPPER_HEADER, value);
 				}
 				Route route = exchange.getAttributeOrDefault(GATEWAY_ROUTE_ATTR, null);
 				if (route != null) {
 					if (!exchange.getResponse().isCommitted()) {
-						exchange.getResponse().getHeaders().add(ROUTE_ID_HEADER, route.getId());
+						exchange.getResponse().getHeaders().add(ROUTE_ID_HEADER,
+								route.getId());
 					}
 				}
 				return chain.filter(exchange);
@@ -122,7 +126,8 @@ public class BaseWebClientTests {
 		@Override
 		public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 			if (exchange.getRequest().getPath().toString().contains("httpbin/httpbin")) {
-				return Mono.error(new IllegalStateException("recursive call to /httpbin"));
+				return Mono
+						.error(new IllegalStateException("recursive call to /httpbin"));
 			}
 			return chain.filter(exchange);
 		}
@@ -136,15 +141,14 @@ public class BaseWebClientTests {
 
 	}
 
-	public static class TestLoadBalancerConfig {
+	protected static class TestRibbonConfig {
 
 		@LocalServerPort
 		protected int port = 0;
 
 		@Bean
-		public ServiceInstanceListSupplier staticServiceInstanceListSupplier() {
-			return ServiceInstanceListSuppliers.from(SERVICE_ID,
-					new DefaultServiceInstance(SERVICE_ID + "-1", SERVICE_ID, "localhost", port, false));
+		public ServerList<Server> ribbonServerList() {
+			return new StaticServerList<>(new Server("localhost", this.port));
 		}
 
 	}

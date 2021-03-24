@@ -26,7 +26,7 @@ It does not work in a traditional Servlet Container or when built as a WAR.
 It is defined by an ID, a destination URI, a collection of predicates, and a collection of filters. A route is matched if the aggregate predicate is true.
 * *Predicate*: This is a https://docs.oracle.com/javase/8/docs/api/java/util/function/Predicate.html[Java 8 Function Predicate]. The input type is a https://docs.spring.io/spring/docs/5.0.x/javadoc-api/org/springframework/web/server/ServerWebExchange.html[Spring Framework `ServerWebExchange`].
 This lets you match on anything from the HTTP request, such as headers or parameters.
-* *Filter*: These are instances of {github-code}/spring-cloud-gateway-server/src/main/java/org/springframework/cloud/gateway/filter/GatewayFilter.java[`GatewayFilter`] that have been constructed with a specific factory.
+* *Filter*: These are instances of https://docs.spring.io/spring/docs/5.0.x/javadoc-api/org/springframework/web/server/GatewayFilter.html[Spring Framework `GatewayFilter`] that have been constructed with a specific factory.
 Here, you can modify requests and responses before or after sending the downstream request.
 
 [[gateway-how-it-works]]
@@ -270,7 +270,7 @@ This route matches if the request method was a `GET` or a `POST`.
 
 === The Path Route Predicate Factory
 
-The `Path` Route Predicate Factory takes two parameters: a list of Spring `PathMatcher` `patterns` and an optional flag called `matchTrailingSlash` (defaults to `true`).
+The `Path` Route Predicate Factory takes two parameters: a list of Spring `PathMatcher` `patterns` and an optional flag called `matchOptionalTrailingSeparator`.
 The following example configures a path route predicate:
 
 .application.yml
@@ -288,9 +288,7 @@ spring:
 ----
 ====
 
-This route matches if the request path was, for example: `/red/1` or `/red/1/` or `/red/blue` or `/blue/green`.
-
-If `matchTrailingSlash` is set to `false`, then request path `/red/1/` will not be matched.
+This route matches if the request path was, for example: `/red/1` or `/red/blue` or `/blue/green`.
 
 This predicate extracts the URI template variables (such as `segment`, defined in the preceding example) as a map of names and values and places it in the `ServerWebExchange.getAttributes()` with a key defined in `ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE`.
 Those values are then available for use by <<gateway-route-filters,`GatewayFilter` factories>>
@@ -615,13 +613,120 @@ This removes duplicate values of `Access-Control-Allow-Credentials` and `Access-
 The `DedupeResponseHeader` filter also accepts an optional `strategy` parameter.
 The accepted values are `RETAIN_FIRST` (default), `RETAIN_LAST`, and `RETAIN_UNIQUE`.
 
+[[hystrix]]
+=== The Hystrix `GatewayFilter` Factory
+
+NOTE: https://cloud.spring.io/spring-cloud-netflix/multi/multi__modules_in_maintenance_mode.html[Netflix has put Hystrix in maintenance mode]. We suggest you use the <<spring-cloud-circuitbreaker-filter-factory, Spring Cloud CircuitBreaker
+Gateway Filter>> with Resilience4J, as support for Hystrix will be removed in a future release.
+
+
+https://github.com/Netflix/Hystrix[Hystrix] is a library from Netflix that implements the https://martinfowler.com/bliki/CircuitBreaker.html[circuit breaker pattern].
+The `Hystrix` `GatewayFilter` lets you introduce circuit breakers to your gateway routes, protecting your services from cascading failures and letting you provide fallback responses in the event of downstream failures.
+
+To enable `Hystrix` `GatewayFilter` instances in your project, add a dependency on `spring-cloud-starter-netflix-hystrix` from https://cloud.spring.io/spring-cloud-netflix/[Spring Cloud Netflix].
+
+The `Hystrix` `GatewayFilter` factory requires a single `name` parameter, which is the name of the `HystrixCommand`.
+The following example configures a Hystrix `GatewayFilter`:
+
+.application.yml
+====
+[source,yaml]
+----
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: hystrix_route
+        uri: https://example.org
+        filters:
+        - Hystrix=myCommandName
+----
+====
+
+This wraps the remaining filters in a `HystrixCommand` with a command name of `myCommandName`.
+
+The Hystrix filter can also accept an optional `fallbackUri` parameter. Currently, only `forward:` schemed URIs are supported. If the fallback is called, the request is forwarded to the controller matched by the URI.
+The following example configures such a fallback:
+
+.application.yml
+====
+[source,yaml]
+----
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: hystrix_route
+        uri: lb://backing-service:8088
+        predicates:
+        - Path=/consumingserviceendpoint
+        filters:
+        - name: Hystrix
+          args:
+            name: fallbackcmd
+            fallbackUri: forward:/incaseoffailureusethis
+        - RewritePath=/consumingserviceendpoint, /backingserviceendpoint
+----
+====
+
+This will forward to the `/incaseoffailureusethis` URI when the Hystrix fallback is called. Note that this example also demonstrates (optional) Spring Cloud Netflix Ribbon load-balancing (defined the `lb` prefix on the destination URI).
+
+The primary scenario is to use the `fallbackUri` to an internal controller or handler within the gateway app.
+However, you can also reroute the request to a controller or handler in an external application, as follows:
+
+.application.yml
+====
+[source,yaml]
+----
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: ingredients
+        uri: lb://ingredients
+        predicates:
+        - Path=//ingredients/**
+        filters:
+        - name: Hystrix
+          args:
+            name: fetchIngredients
+            fallbackUri: forward:/fallback
+      - id: ingredients-fallback
+        uri: http://localhost:9994
+        predicates:
+        - Path=/fallback
+----
+====
+
+In this example, there is no `fallback` endpoint or handler in the gateway application.
+However, there is one in another application, registered under `http://localhost:9994`.
+
+In case of the request being forwarded to the fallback, the Hystrix Gateway filter also provides the `Throwable` that has caused it.
+It is added to the `ServerWebExchange` as the `ServerWebExchangeUtils.HYSTRIX_EXECUTION_EXCEPTION_ATTR` attribute, which you can use when handling the fallback within the gateway application.
+
+For the external controller/handler scenario, you can add headers with exception details.
+You can find more information on doing so in  the <<fallback-headers, FallbackHeaders GatewayFilter Factory section>>.
+
+You can configured Hystrix settings (such as timeouts) with global defaults or on a route-by-route basis by using application properties, as explained on the https://github.com/Netflix/Hystrix/wiki/Configuration[Hystrix wiki].
+
+To set a five-second timeout for the example route shown earlier, you could use the following configuration:
+
+.application.yml
+====
+[source,yaml]
+----
+hystrix.command.fallbackcmd.execution.isolation.thread.timeoutInMilliseconds: 5000
+----
+====
+
 [[spring-cloud-circuitbreaker-filter-factory]]
 === Spring Cloud CircuitBreaker GatewayFilter Factory
 
 The Spring Cloud CircuitBreaker GatewayFilter factory uses the Spring Cloud CircuitBreaker APIs to wrap Gateway routes in
-a circuit breaker. Spring Cloud CircuitBreaker supports multiple libraries that can be used with Spring Cloud Gateway. Spring Cloud supports Resilience4J out of the box.
+a circuit breaker. Spring Cloud CircuitBreaker supports two libraries that can be used with Spring Cloud Gateway, Hystrix
+and Resilience4J.  Since Netflix has placed Hystrix in maintenance-only mode, we suggest that you use Resilience4J.
 
-To enable the Spring Cloud CircuitBreaker filter, you need to place `spring-cloud-starter-circuitbreaker-reactor-resilience4j` on the classpath.
+To enable the Spring Cloud CircuitBreaker filter, you need to place either `spring-cloud-starter-circuitbreaker-reactor-resilience4j` or `spring-cloud-starter-netflix-hystrix` on the classpath.
 The following example configures a Spring Cloud CircuitBreaker `GatewayFilter`:
 
 .application.yml
@@ -642,6 +747,7 @@ spring:
 To configure the circuit breaker, see the configuration for the underlying circuit breaker implementation you are using.
 
 * https://cloud.spring.io/spring-cloud-circuitbreaker/reference/html/spring-cloud-circuitbreaker.html[Resilience4J Documentation]
+* https://cloud.spring.io/spring-cloud-netflix/reference/html/[Hystrix Documentation]
 
 The Spring Cloud CircuitBreaker filter can also accept an optional `fallbackUri` parameter.
 Currently, only `forward:` schemed URIs are supported.
@@ -687,7 +793,7 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 ====
 
 This example forwards to the `/inCaseofFailureUseThis` URI when the circuit breaker fallback is called.
-Note that this example also demonstrates the (optional) Spring Cloud LoadBalancer load-balancing (defined by the `lb` prefix on the destination URI).
+Note that this example also demonstrates the (optional) Spring Cloud Netflix Ribbon load-balancing (defined by the `lb` prefix on the destination URI).
 
 The primary scenario is to use the `fallbackUri` to define an internal controller or handler within the gateway application.
 However, you can also reroute the request to a controller or handler in an external application, as follows:
@@ -777,7 +883,7 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 [[fallback-headers]]
 === The `FallbackHeaders` `GatewayFilter` Factory
 
-The `FallbackHeaders` factory lets you add Spring Cloud CircuitBreaker execution exception details in the headers of a request forwarded to a `fallbackUri` in an external application, as in the following scenario:
+The `FallbackHeaders` factory lets you add Hystrix or Spring Cloud CircuitBreaker execution exception details in the headers of a request forwarded to a `fallbackUri` in an external application, as in the following scenario:
 
 .application.yml
 ====
@@ -817,7 +923,7 @@ You can overwrite the names of the headers in the configuration by setting the v
 * `rootCauseExceptionTypeHeaderName` (`"Root-Cause-Exception-Type"`)
 * `rootCauseExceptionMessageHeaderName` (`"Root-Cause-Exception-Message"`)
 
-For more information on circuit breakers and the gateway see the <<spring-cloud-circuitbreaker-filter-factory, Spring Cloud CircuitBreaker Factory section>>.
+For more information on circuit breakers and the gateway see the <<hystrix, Hystrix GatewayFilter Factory section>> or <<spring-cloud-circuitbreaker-filter-factory, Spring Cloud CircuitBreaker Factory section>>.
 
 === The `MapRequestHeader` `GatewayFilter` Factory
 
@@ -1132,7 +1238,7 @@ spring:
         predicates:
         - Path=/red/**
         filters:
-        - RewritePath=/red/?(?<segment>.*), /$\{segment}
+        - RewritePath=/red(?<segment>/?.*), $\{segment}
 ----
 ====
 
@@ -1635,69 +1741,6 @@ public RouteLocator routes(RouteLocatorBuilder builder) {
 NOTE:  if the response has no body, the `RewriteFilter` will be passed `null`. `Mono.empty()` should be returned to assign a missing body in the response.
 ====
 
-=== Token Relay `GatewayFilter` Factory
-
-A Token Relay is where an OAuth2 consumer acts as a Client and
-forwards the incoming token to outgoing resource requests. The
-consumer can be a pure Client (like an SSO application) or a Resource
-Server.
-
-Spring Cloud Gateway can forward OAuth2 access tokens downstream to the services
-it is proxying. To add this functionlity to gateway you need to add the
-`TokenRelayGatewayFilterFactory` like this:
-
-.App.java
-[source,java]
-----
-
-@Bean
-public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
-    return builder.routes()
-            .route("resource", r -> r.path("/resource")
-                    .filters(f -> f.tokenRelay())
-                    .uri("http://localhost:9000"))
-            .build();
-}
-----
-
-or this
-
-.application.yaml
-[source,yaml]
-----
-spring:
-  cloud:
-    gateway:
-      routes:
-      - id: resource
-        uri: http://localhost:9000
-        predicates:
-        - Path=/resource
-        filters:
-        - TokenRelay=
-----
-
-and it will (in addition to logging the user in and grabbing a token)
-pass the authentication token downstream to the services (in this case
-`/resource`).
-
-To enable this for Spring Cloud Gateway add the following dependencies
-
-- `org.springframework.boot:spring-boot-starter-oauth2-client`
-
-How does it work?  The
-{githubmaster}/src/main/java/org/springframework/cloud/gateway/security/TokenRelayGatewayFilterFactory.java[filter]
-extracts an access token from the currently authenticated user,
-and puts it in a request header for the downstream requests.
-
-For a full working sample see https://github.com/spring-cloud-samples/sample-gateway-oauth2login[this project].
-
-NOTE: A `TokenRelayGatewayFilterFactory` bean will only be created if the proper `spring.security.oauth2.client.*` properties are set which will trigger creation of a `ReactiveClientRegistrationRepository` bean.
-
-NOTE: The default implementation of `ReactiveOAuth2AuthorizedClientService` used by `TokenRelayGatewayFilterFactory`
-uses an in-memory data store.  You will need to provide your own implementation `ReactiveOAuth2AuthorizedClientService`
-if you need a more robust solution.
-
 === Default Filters
 
 To add a filter and apply it to all routes, you can use `spring.cloud.gateway.default-filters`.
@@ -1803,7 +1846,9 @@ However, if `GATEWAY_SCHEME_PREFIX_ATTR` is specified for the
 route in the Gateway configuration, the prefix is stripped and the resulting scheme from the
 route URL overrides the `ServiceInstance` configuration.
 
-TIP: Gateway supports all the LoadBalancer features. You can read more about them in the https://docs.spring.io/spring-cloud-commons/docs/current/reference/html/#spring-cloud-loadbalancer[Spring Cloud Commons documentation].
+WARNING: `LoadBalancerClientFilter` uses a blocking ribbon `LoadBalancerClient` under the hood.
+We suggest you use <<reactive-loadbalancer-client-filter,`ReactiveLoadBalancerClientFilter` instead>>.
+You can switch to it by setting the value of the `spring.cloud.loadbalancer.ribbon.enabled` to `false`.
 
 [[reactive-loadbalancer-client-filter]]
 === The `ReactiveLoadBalancerClientFilter`
@@ -2226,7 +2271,7 @@ By default, the gateway defines a single predicate and filter for routes created
 The default predicate is a path predicate defined with the pattern `/serviceId/**`, where `serviceId` is
 the ID of the service from the `DiscoveryClient`.
 
-The default filter is a rewrite path filter with the regex `/serviceId/?(?<remaining>.*)` and the replacement `/${remaining}`.
+The default filter is a rewrite path filter with the regex `/serviceId/(?<remaining>.*)` and the replacement `/${remaining}`.
 This strips the service ID from the path before the request is sent downstream.
 
 If you want to customize the predicates or filters used by the `DiscoveryClient` routes, set `spring.cloud.gateway.discovery.locator.predicates[x]` and `spring.cloud.gateway.discovery.locator.filters[y]`.
@@ -2241,10 +2286,10 @@ spring.cloud.gateway.discovery.locator.predicates[0].name: Path
 spring.cloud.gateway.discovery.locator.predicates[0].args[pattern]: "'/'+serviceId+'/**'"
 spring.cloud.gateway.discovery.locator.predicates[1].name: Host
 spring.cloud.gateway.discovery.locator.predicates[1].args[pattern]: "'**.foo.com'"
-spring.cloud.gateway.discovery.locator.filters[0].name: CircuitBreaker
+spring.cloud.gateway.discovery.locator.filters[0].name: Hystrix
 spring.cloud.gateway.discovery.locator.filters[0].args[name]: serviceId
 spring.cloud.gateway.discovery.locator.filters[1].name: RewritePath
-spring.cloud.gateway.discovery.locator.filters[1].args[regexp]: "'/' + serviceId + '/?(?<remaining>.*)'"
+spring.cloud.gateway.discovery.locator.filters[1].args[regexp]: "'/' + serviceId + '/(?<remaining>.*)'"
 spring.cloud.gateway.discovery.locator.filters[1].args[replacement]: "'/${remaining}'"
 ----
 ====

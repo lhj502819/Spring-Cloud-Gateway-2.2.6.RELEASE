@@ -247,9 +247,9 @@
       "defaultValue": "true"
     },
     {
-      "name": "spring.cloud.gateway.global-filter.reactive-load-balancer-client.enabled",
+      "name": "spring.cloud.gateway.global-filter.reactive-load-balancer.enabled",
       "type": "java.lang.Boolean",
-      "description": "Enables the reactive-load-balancer-client global filter.",
+      "description": "Enables the reactive-loadbalancer global filter.",
       "defaultValue": "true"
     },
     {

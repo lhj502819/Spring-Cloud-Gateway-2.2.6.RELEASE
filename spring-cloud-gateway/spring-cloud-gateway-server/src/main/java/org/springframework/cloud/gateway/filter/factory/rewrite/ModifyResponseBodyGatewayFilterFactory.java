@@ -16,6 +16,7 @@
 
 package org.springframework.cloud.gateway.filter.factory.rewrite;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,12 +38,19 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.client.reactive.ClientHttpResponse;
 import org.springframework.http.codec.HttpMessageReader;
+import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
+import org.springframework.lang.Nullable;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.server.HandlerStrategies;
 import org.springframework.web.server.ServerWebExchange;
 
 import static java.util.function.Function.identity;
@@ -52,8 +60,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.O
 /**
  * GatewayFilter that modifies the response body.
  */
-public class ModifyResponseBodyGatewayFilterFactory
-		extends AbstractGatewayFilterFactory<ModifyResponseBodyGatewayFilterFactory.Config> {
+public class ModifyResponseBodyGatewayFilterFactory extends
+		AbstractGatewayFilterFactory<ModifyResponseBodyGatewayFilterFactory.Config> {
 
 	private final Map<String, MessageBodyDecoder> messageBodyDecoders;
 
@@ -61,8 +69,26 @@ public class ModifyResponseBodyGatewayFilterFactory
 
 	private final List<HttpMessageReader<?>> messageReaders;
 
-	public ModifyResponseBodyGatewayFilterFactory(List<HttpMessageReader<?>> messageReaders,
-			Set<MessageBodyDecoder> messageBodyDecoders, Set<MessageBodyEncoder> messageBodyEncoders) {
+	@Deprecated
+	public ModifyResponseBodyGatewayFilterFactory() {
+		super(Config.class);
+		messageReaders = HandlerStrategies.withDefaults().messageReaders();
+		messageBodyDecoders = Collections.emptyMap();
+		messageBodyEncoders = Collections.emptyMap();
+	}
+
+	@Deprecated
+	public ModifyResponseBodyGatewayFilterFactory(ServerCodecConfigurer codecConfigurer) {
+		super(Config.class);
+		this.messageReaders = codecConfigurer.getReaders();
+		messageBodyDecoders = Collections.emptyMap();
+		messageBodyEncoders = Collections.emptyMap();
+	}
+
+	public ModifyResponseBodyGatewayFilterFactory(
+			List<HttpMessageReader<?>> messageReaders,
+			Set<MessageBodyDecoder> messageBodyDecoders,
+			Set<MessageBodyEncoder> messageBodyEncoders) {
 		super(Config.class);
 		this.messageReaders = messageReaders;
 		this.messageBodyDecoders = messageBodyDecoders.stream()
@@ -73,7 +99,8 @@ public class ModifyResponseBodyGatewayFilterFactory
 
 	@Override
 	public GatewayFilter apply(Config config) {
-		ModifyResponseGatewayFilter gatewayFilter = new ModifyResponseGatewayFilter(config);
+		ModifyResponseGatewayFilter gatewayFilter = new ModifyResponseGatewayFilter(
+				config);
 		gatewayFilter.setFactory(this);
 		return gatewayFilter;
 	}
@@ -163,12 +190,25 @@ public class ModifyResponseBodyGatewayFilterFactory
 		private GatewayFilterFactory<Config> gatewayFilterFactory;
 
 		public ModifyResponseGatewayFilter(Config config) {
+			this(config, null);
+		}
+
+		@Deprecated
+		public ModifyResponseGatewayFilter(Config config,
+				@Nullable ServerCodecConfigurer codecConfigurer) {
 			this.config = config;
 		}
 
 		@Override
 		public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-			return chain.filter(exchange.mutate().response(new ModifiedServerHttpResponse(exchange, config)).build());
+			return chain.filter(exchange.mutate()
+					.response(new ModifiedServerHttpResponse(exchange, config)).build());
+		}
+
+		@SuppressWarnings("unchecked")
+		@Deprecated
+		ServerHttpResponse decorate(ServerWebExchange exchange) {
+			return new ModifiedServerHttpResponse(exchange, config);
 		}
 
 		@Override
@@ -178,9 +218,12 @@ public class ModifyResponseBodyGatewayFilterFactory
 
 		@Override
 		public String toString() {
-			Object obj = (this.gatewayFilterFactory != null) ? this.gatewayFilterFactory : this;
-			return filterToStringCreator(obj).append("New content type", config.getNewContentType())
-					.append("In class", config.getInClass()).append("Out class", config.getOutClass()).toString();
+			Object obj = (this.gatewayFilterFactory != null) ? this.gatewayFilterFactory
+					: this;
+			return filterToStringCreator(obj)
+					.append("New content type", config.getNewContentType())
+					.append("In class", config.getInClass())
+					.append("Out class", config.getOutClass()).toString();
 		}
 
 		public void setFactory(GatewayFilterFactory<Config> gatewayFilterFactory) {
@@ -208,7 +251,8 @@ public class ModifyResponseBodyGatewayFilterFactory
 			Class inClass = config.getInClass();
 			Class outClass = config.getOutClass();
 
-			String originalResponseContentType = exchange.getAttribute(ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR);
+			String originalResponseContentType = exchange
+					.getAttribute(ORIGINAL_RESPONSE_CONTENT_TYPE_ATTR);
 			HttpHeaders httpHeaders = new HttpHeaders();
 			// explicitly add it in this way instead of
 			// 'httpHeaders.setContentType(originalResponseContentType)'
@@ -220,48 +264,62 @@ public class ModifyResponseBodyGatewayFilterFactory
 
 			// TODO: flux or mono
 			Mono modifiedBody = extractBody(exchange, clientResponse, inClass)
-					.flatMap(originalBody -> config.getRewriteFunction().apply(exchange, originalBody))
-					.switchIfEmpty(Mono.defer(() -> (Mono) config.getRewriteFunction().apply(exchange, null)));
+					.flatMap(originalBody -> config.getRewriteFunction().apply(exchange,
+							originalBody))
+					.switchIfEmpty(Mono.defer(() -> (Mono) config.getRewriteFunction()
+							.apply(exchange, null)));
 
-			BodyInserter bodyInserter = BodyInserters.fromPublisher(modifiedBody, outClass);
+			BodyInserter bodyInserter = BodyInserters.fromPublisher(modifiedBody,
+					outClass);
 			CachedBodyOutputMessage outputMessage = new CachedBodyOutputMessage(exchange,
 					exchange.getResponse().getHeaders());
-			return bodyInserter.insert(outputMessage, new BodyInserterContext()).then(Mono.defer(() -> {
-				Mono<DataBuffer> messageBody = writeBody(getDelegate(), outputMessage, outClass);
-				HttpHeaders headers = getDelegate().getHeaders();
-				if (!headers.containsKey(HttpHeaders.TRANSFER_ENCODING)
-						|| headers.containsKey(HttpHeaders.CONTENT_LENGTH)) {
-					messageBody = messageBody.doOnNext(data -> headers.setContentLength(data.readableByteCount()));
-				}
-				// TODO: fail if isStreamingMediaType?
-				return getDelegate().writeWith(messageBody);
-			}));
+			return bodyInserter.insert(outputMessage, new BodyInserterContext())
+					.then(Mono.defer(() -> {
+						Mono<DataBuffer> messageBody = writeBody(getDelegate(),
+								outputMessage, outClass);
+						HttpHeaders headers = getDelegate().getHeaders();
+						if (!headers.containsKey(HttpHeaders.TRANSFER_ENCODING)
+								|| headers.containsKey(HttpHeaders.CONTENT_LENGTH)) {
+							messageBody = messageBody.doOnNext(data -> headers
+									.setContentLength(data.readableByteCount()));
+						}
+						// TODO: fail if isStreamingMediaType?
+						return getDelegate().writeWith(messageBody);
+					}));
 		}
 
 		@Override
-		public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> body) {
+		public Mono<Void> writeAndFlushWith(
+				Publisher<? extends Publisher<? extends DataBuffer>> body) {
 			return writeWith(Flux.from(body).flatMapSequential(p -> p));
 		}
 
-		private ClientResponse prepareClientResponse(Publisher<? extends DataBuffer> body, HttpHeaders httpHeaders) {
+		private ClientResponse prepareClientResponse(Publisher<? extends DataBuffer> body,
+				HttpHeaders httpHeaders) {
 			ClientResponse.Builder builder;
-			builder = ClientResponse.create(exchange.getResponse().getStatusCode(), messageReaders);
-			return builder.headers(headers -> headers.putAll(httpHeaders)).body(Flux.from(body)).build();
+			builder = ClientResponse.create(exchange.getResponse().getStatusCode(),
+					messageReaders);
+			return builder.headers(headers -> headers.putAll(httpHeaders))
+					.body(Flux.from(body)).build();
 		}
 
-		private <T> Mono<T> extractBody(ServerWebExchange exchange, ClientResponse clientResponse, Class<T> inClass) {
+		private <T> Mono<T> extractBody(ServerWebExchange exchange,
+				ClientResponse clientResponse, Class<T> inClass) {
 			// if inClass is byte[] then just return body, otherwise check if
 			// decoding required
 			if (byte[].class.isAssignableFrom(inClass)) {
 				return clientResponse.bodyToMono(inClass);
 			}
 
-			List<String> encodingHeaders = exchange.getResponse().getHeaders().getOrEmpty(HttpHeaders.CONTENT_ENCODING);
+			List<String> encodingHeaders = exchange.getResponse().getHeaders()
+					.getOrEmpty(HttpHeaders.CONTENT_ENCODING);
 			for (String encoding : encodingHeaders) {
 				MessageBodyDecoder decoder = messageBodyDecoders.get(encoding);
 				if (decoder != null) {
-					return clientResponse.bodyToMono(byte[].class).publishOn(Schedulers.parallel()).map(decoder::decode)
-							.map(bytes -> exchange.getResponse().bufferFactory().wrap(bytes))
+					return clientResponse.bodyToMono(byte[].class)
+							.publishOn(Schedulers.parallel()).map(decoder::decode)
+							.map(bytes -> exchange.getResponse().bufferFactory()
+									.wrap(bytes))
 							.map(buffer -> prepareClientResponse(Mono.just(buffer),
 									exchange.getResponse().getHeaders()))
 							.flatMap(response -> response.bodyToMono(inClass));
@@ -271,14 +329,15 @@ public class ModifyResponseBodyGatewayFilterFactory
 			return clientResponse.bodyToMono(inClass);
 		}
 
-		private Mono<DataBuffer> writeBody(ServerHttpResponse httpResponse, CachedBodyOutputMessage message,
-				Class<?> outClass) {
+		private Mono<DataBuffer> writeBody(ServerHttpResponse httpResponse,
+				CachedBodyOutputMessage message, Class<?> outClass) {
 			Mono<DataBuffer> response = DataBufferUtils.join(message.getBody());
 			if (byte[].class.isAssignableFrom(outClass)) {
 				return response;
 			}
 
-			List<String> encodingHeaders = httpResponse.getHeaders().getOrEmpty(HttpHeaders.CONTENT_ENCODING);
+			List<String> encodingHeaders = httpResponse.getHeaders()
+					.getOrEmpty(HttpHeaders.CONTENT_ENCODING);
 			for (String encoding : encodingHeaders) {
 				MessageBodyEncoder encoder = messageBodyEncoders.get(encoding);
 				if (encoder != null) {
@@ -293,6 +352,52 @@ public class ModifyResponseBodyGatewayFilterFactory
 			}
 
 			return response;
+		}
+
+	}
+
+	@Deprecated
+	@SuppressWarnings("unchecked")
+	public class ResponseAdapter implements ClientHttpResponse {
+
+		private final Flux<DataBuffer> flux;
+
+		private final HttpHeaders headers;
+
+		public ResponseAdapter(Publisher<? extends DataBuffer> body,
+				HttpHeaders headers) {
+			this.headers = headers;
+			if (body instanceof Flux) {
+				flux = (Flux) body;
+			}
+			else {
+				flux = ((Mono) body).flux();
+			}
+		}
+
+		@Override
+		public Flux<DataBuffer> getBody() {
+			return flux;
+		}
+
+		@Override
+		public HttpHeaders getHeaders() {
+			return headers;
+		}
+
+		@Override
+		public HttpStatus getStatusCode() {
+			return null;
+		}
+
+		@Override
+		public int getRawStatusCode() {
+			return 0;
+		}
+
+		@Override
+		public MultiValueMap<String, ResponseCookie> getCookies() {
+			return null;
 		}
 
 	}

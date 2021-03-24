@@ -43,28 +43,36 @@ public final class NameUtils {
 		return GENERATED_NAME_PREFIX + i;
 	}
 
-	public static String normalizeRoutePredicateName(Class<? extends RoutePredicateFactory> clazz) {
-		return removeGarbage(clazz.getSimpleName().replace(RoutePredicateFactory.class.getSimpleName(), ""));
+	public static String normalizeRoutePredicateName(
+			Class<? extends RoutePredicateFactory> clazz) {
+		return removeGarbage(clazz.getSimpleName()
+				.replace(RoutePredicateFactory.class.getSimpleName(), ""));
 	}
 
-	public static String normalizeRoutePredicateNameAsProperty(Class<? extends RoutePredicateFactory> clazz) {
+	public static String normalizeRoutePredicateNameAsProperty(
+			Class<? extends RoutePredicateFactory> clazz) {
 		return normalizeToCanonicalPropertyFormat(normalizeRoutePredicateName(clazz));
 	}
 
-	public static String normalizeFilterFactoryName(Class<? extends GatewayFilterFactory> clazz) {
-		return removeGarbage(clazz.getSimpleName().replace(GatewayFilterFactory.class.getSimpleName(), ""));
+	public static String normalizeFilterFactoryName(
+			Class<? extends GatewayFilterFactory> clazz) {
+		return removeGarbage(clazz.getSimpleName()
+				.replace(GatewayFilterFactory.class.getSimpleName(), ""));
 	}
 
 	public static String normalizeGlobalFilterName(Class<? extends GlobalFilter> clazz) {
-		return removeGarbage(clazz.getSimpleName().replace(GlobalFilter.class.getSimpleName(), "")).replace("Filter",
-				"");
+		return removeGarbage(
+				clazz.getSimpleName().replace(GlobalFilter.class.getSimpleName(), ""))
+						.replace("Filter", "");
 	}
 
-	public static String normalizeFilterFactoryNameAsProperty(Class<? extends GatewayFilterFactory> clazz) {
+	public static String normalizeFilterFactoryNameAsProperty(
+			Class<? extends GatewayFilterFactory> clazz) {
 		return normalizeToCanonicalPropertyFormat(normalizeFilterFactoryName(clazz));
 	}
 
-	public static String normalizeGlobalFilterNameAsProperty(Class<? extends GlobalFilter> filterClass) {
+	public static String normalizeGlobalFilterNameAsProperty(
+			Class<? extends GlobalFilter> filterClass) {
 		return normalizeToCanonicalPropertyFormat(normalizeGlobalFilterName(filterClass));
 	}
 
@@ -73,7 +81,8 @@ public final class NameUtils {
 		StringBuffer stringBuffer = new StringBuffer();
 		while (matcher.find()) {
 			if (stringBuffer.length() != 0) {
-				matcher.appendReplacement(stringBuffer, "-" + matcher.group(1).toLowerCase());
+				matcher.appendReplacement(stringBuffer,
+						"-" + matcher.group(1).toLowerCase());
 			}
 			else {
 				matcher.appendReplacement(stringBuffer, matcher.group(1).toLowerCase());

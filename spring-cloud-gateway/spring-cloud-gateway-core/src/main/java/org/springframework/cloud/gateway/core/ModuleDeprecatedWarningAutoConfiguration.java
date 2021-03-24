@@ -14,10 +14,24 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.gateway.route.builder;
+package org.springframework.cloud.gateway.core;
 
-public interface Buildable<T> {
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-	T build();
+import org.springframework.context.annotation.Configuration;
+
+@Configuration(proxyBeanMethods = false)
+public class ModuleDeprecatedWarningAutoConfiguration {
+
+	private static final Log log = LogFactory
+			.getLog(ModuleDeprecatedWarningAutoConfiguration.class);
+
+	public ModuleDeprecatedWarningAutoConfiguration() {
+		if (log.isWarnEnabled()) {
+			log.warn(
+					"The spring-cloud-gateway-core module had been deprecated in favor of spring-cloud-gateway-server");
+		}
+	}
 
 }

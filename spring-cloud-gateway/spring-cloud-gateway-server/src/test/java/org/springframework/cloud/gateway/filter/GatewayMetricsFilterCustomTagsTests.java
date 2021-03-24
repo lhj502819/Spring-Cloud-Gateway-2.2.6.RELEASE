@@ -37,7 +37,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.cloud.gateway.config.GatewayMetricsProperties.DEFAULT_PREFIX;
 
 /**
  * @author Ingyu Hwang
@@ -47,7 +46,7 @@ import static org.springframework.cloud.gateway.config.GatewayMetricsProperties.
 @DirtiesContext
 public class GatewayMetricsFilterCustomTagsTests extends BaseWebClientTests {
 
-	private static final String REQUEST_METRICS_NAME = DEFAULT_PREFIX + ".requests";
+	private static final String REQUEST_METRICS_NAME = "gateway.requests";
 
 	@Autowired
 	private MeterRegistry meterRegistry;
@@ -73,7 +72,8 @@ public class GatewayMetricsFilterCustomTagsTests extends BaseWebClientTests {
 	}
 
 	private void assertMetricsContainsTag(String tagKey, String tagValue) {
-		assertThat(this.meterRegistry.get(REQUEST_METRICS_NAME).tag(tagKey, tagValue).timer().count()).isEqualTo(1);
+		assertThat(this.meterRegistry.get(REQUEST_METRICS_NAME).tag(tagKey, tagValue)
+				.timer().count()).isEqualTo(1);
 	}
 
 	@EnableAutoConfiguration

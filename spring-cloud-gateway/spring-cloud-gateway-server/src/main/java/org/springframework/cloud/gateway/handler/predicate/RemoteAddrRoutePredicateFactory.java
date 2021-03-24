@@ -43,7 +43,8 @@ import static org.springframework.cloud.gateway.support.ShortcutConfigurable.Sho
 public class RemoteAddrRoutePredicateFactory
 		extends AbstractRoutePredicateFactory<RemoteAddrRoutePredicateFactory.Config> {
 
-	private static final Log log = LogFactory.getLog(RemoteAddrRoutePredicateFactory.class);
+	private static final Log log = LogFactory
+			.getLog(RemoteAddrRoutePredicateFactory.class);
 
 	public RemoteAddrRoutePredicateFactory() {
 		super(Config.class);
@@ -75,13 +76,15 @@ public class RemoteAddrRoutePredicateFactory
 		return new GatewayPredicate() {
 			@Override
 			public boolean test(ServerWebExchange exchange) {
-				InetSocketAddress remoteAddress = config.remoteAddressResolver.resolve(exchange);
+				InetSocketAddress remoteAddress = config.remoteAddressResolver
+						.resolve(exchange);
 				if (remoteAddress != null && remoteAddress.getAddress() != null) {
 					String hostAddress = remoteAddress.getAddress().getHostAddress();
 					String host = exchange.getRequest().getURI().getHost();
 
 					if (log.isDebugEnabled() && !hostAddress.equals(host)) {
-						log.debug("Remote addresses didn't match " + hostAddress + " != " + host);
+						log.debug("Remote addresses didn't match " + hostAddress + " != "
+								+ host);
 					}
 
 					for (IpSubnetFilterRule source : sources) {
@@ -110,7 +113,8 @@ public class RemoteAddrRoutePredicateFactory
 		String ipAddress = ipAddressCidrPrefix[0];
 		int cidrPrefix = Integer.parseInt(ipAddressCidrPrefix[1]);
 
-		sources.add(new IpSubnetFilterRule(ipAddress, cidrPrefix, IpFilterRuleType.ACCEPT));
+		sources.add(
+				new IpSubnetFilterRule(ipAddress, cidrPrefix, IpFilterRuleType.ACCEPT));
 	}
 
 	@Validated
@@ -137,7 +141,8 @@ public class RemoteAddrRoutePredicateFactory
 			return this;
 		}
 
-		public Config setRemoteAddressResolver(RemoteAddressResolver remoteAddressResolver) {
+		public Config setRemoteAddressResolver(
+				RemoteAddressResolver remoteAddressResolver) {
 			this.remoteAddressResolver = remoteAddressResolver;
 			return this;
 		}

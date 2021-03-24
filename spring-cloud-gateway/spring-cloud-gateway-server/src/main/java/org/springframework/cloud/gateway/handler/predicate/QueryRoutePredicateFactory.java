@@ -29,7 +29,8 @@ import org.springframework.web.server.ServerWebExchange;
 /**
  * @author Spencer Gibb
  */
-public class QueryRoutePredicateFactory extends AbstractRoutePredicateFactory<QueryRoutePredicateFactory.Config> {
+public class QueryRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<QueryRoutePredicateFactory.Config> {
 
 	/**
 	 * Param key.
@@ -57,10 +58,12 @@ public class QueryRoutePredicateFactory extends AbstractRoutePredicateFactory<Qu
 			public boolean test(ServerWebExchange exchange) {
 				if (!StringUtils.hasText(config.regexp)) {
 					// check existence of header
-					return exchange.getRequest().getQueryParams().containsKey(config.param);
+					return exchange.getRequest().getQueryParams()
+							.containsKey(config.param);
 				}
 
-				List<String> values = exchange.getRequest().getQueryParams().get(config.param);
+				List<String> values = exchange.getRequest().getQueryParams()
+						.get(config.param);
 				if (values == null) {
 					return false;
 				}
@@ -74,7 +77,8 @@ public class QueryRoutePredicateFactory extends AbstractRoutePredicateFactory<Qu
 
 			@Override
 			public String toString() {
-				return String.format("Query: param=%s regexp=%s", config.getParam(), config.getRegexp());
+				return String.format("Query: param=%s regexp=%s", config.getParam(),
+						config.getRegexp());
 			}
 		};
 	}

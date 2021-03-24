@@ -16,7 +16,6 @@
 
 package org.springframework.cloud.gateway.filter.factory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,8 +40,8 @@ import static org.springframework.cloud.gateway.support.GatewayToStringStyler.fi
  * @author Sakalya Deshpande
  */
 
-public class RequestHeaderSizeGatewayFilterFactory
-		extends AbstractGatewayFilterFactory<RequestHeaderSizeGatewayFilterFactory.Config> {
+public class RequestHeaderSizeGatewayFilterFactory extends
+		AbstractGatewayFilterFactory<RequestHeaderSizeGatewayFilterFactory.Config> {
 
 	private static String ERROR = "Request Header/s size is larger than permissible limit."
 			+ " Request Header/s size is %s where permissible limit is %s";
@@ -52,15 +51,11 @@ public class RequestHeaderSizeGatewayFilterFactory
 	}
 
 	@Override
-	public List<String> shortcutFieldOrder() {
-		return Collections.singletonList("maxSize");
-	}
-
-	@Override
 	public GatewayFilter apply(RequestHeaderSizeGatewayFilterFactory.Config config) {
 		return new GatewayFilter() {
 			@Override
-			public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+			public Mono<Void> filter(ServerWebExchange exchange,
+					GatewayFilterChain chain) {
 				ServerHttpRequest request = exchange.getRequest();
 				HttpHeaders headers = request.getHeaders();
 				Long headerSizeInBytes = 0L;
@@ -68,12 +63,13 @@ public class RequestHeaderSizeGatewayFilterFactory
 				for (Map.Entry<String, List<String>> headerEntry : headers.entrySet()) {
 					List<String> values = headerEntry.getValue();
 					for (String value : values) {
-						headerSizeInBytes += (long) value.getBytes().length;
+						headerSizeInBytes += Long.valueOf(value.getBytes().length);
 					}
 				}
 
 				if (headerSizeInBytes > config.getMaxSize().toBytes()) {
-					exchange.getResponse().setStatusCode(HttpStatus.REQUEST_HEADER_FIELDS_TOO_LARGE);
+					exchange.getResponse()
+							.setStatusCode(HttpStatus.REQUEST_HEADER_FIELDS_TOO_LARGE);
 					exchange.getResponse().getHeaders().add("errorMessage",
 							getErrorMessage(headerSizeInBytes, config.getMaxSize()));
 					return exchange.getResponse().setComplete();
@@ -92,7 +88,8 @@ public class RequestHeaderSizeGatewayFilterFactory
 	}
 
 	private static String getErrorMessage(Long currentRequestSize, DataSize maxSize) {
-		return String.format(ERROR, DataSize.of(currentRequestSize, DataUnit.BYTES), maxSize);
+		return String.format(ERROR, DataSize.of(currentRequestSize, DataUnit.BYTES),
+				maxSize);
 	}
 
 	public static class Config {

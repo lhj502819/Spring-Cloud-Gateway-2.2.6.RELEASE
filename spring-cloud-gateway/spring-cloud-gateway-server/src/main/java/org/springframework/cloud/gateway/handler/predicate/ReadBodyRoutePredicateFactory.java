@@ -37,9 +37,11 @@ import org.springframework.web.server.ServerWebExchange;
  * The body is cached in memory so that possible subsequent calls to the predicate do not
  * need to deserialize again.
  */
-public class ReadBodyRoutePredicateFactory extends AbstractRoutePredicateFactory<ReadBodyRoutePredicateFactory.Config> {
+public class ReadBodyRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<ReadBodyRoutePredicateFactory.Config> {
 
-	protected static final Log log = LogFactory.getLog(ReadBodyRoutePredicateFactory.class);
+	protected static final Log log = LogFactory
+			.getLog(ReadBodyRoutePredicateFactory.class);
 
 	private static final String TEST_ATTRIBUTE = "read_body_predicate_test_attribute";
 
@@ -90,10 +92,13 @@ public class ReadBodyRoutePredicateFactory extends AbstractRoutePredicateFactory
 				else {
 					return ServerWebExchangeUtils.cacheRequestBodyAndRequest(exchange,
 							(serverHttpRequest) -> ServerRequest
-									.create(exchange.mutate().request(serverHttpRequest).build(), messageReaders)
-									.bodyToMono(inClass).doOnNext(objectValue -> exchange.getAttributes()
-											.put(CACHE_REQUEST_BODY_OBJECT_KEY, objectValue))
-									.map(objectValue -> config.getPredicate().test(objectValue)));
+									.create(exchange.mutate().request(serverHttpRequest)
+											.build(), messageReaders)
+									.bodyToMono(inClass)
+									.doOnNext(objectValue -> exchange.getAttributes().put(
+											CACHE_REQUEST_BODY_OBJECT_KEY, objectValue))
+									.map(objectValue -> config.getPredicate()
+											.test(objectValue)));
 				}
 			}
 
@@ -107,7 +112,8 @@ public class ReadBodyRoutePredicateFactory extends AbstractRoutePredicateFactory
 	@Override
 	@SuppressWarnings("unchecked")
 	public Predicate<ServerWebExchange> apply(Config config) {
-		throw new UnsupportedOperationException("ReadBodyPredicateFactory is only async.");
+		throw new UnsupportedOperationException(
+				"ReadBodyPredicateFactory is only async.");
 	}
 
 	public static class Config {

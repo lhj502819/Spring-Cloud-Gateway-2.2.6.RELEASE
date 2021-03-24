@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
 @AutoConfigureBefore(GatewayAutoConfiguration.class)
 public class GatewayClassPathWarningAutoConfiguration {
 
-	private static final Log log = LogFactory.getLog(GatewayClassPathWarningAutoConfiguration.class);
+	private static final Log log = LogFactory
+			.getLog(GatewayClassPathWarningAutoConfiguration.class);
 
 	private static final String BORDER = "\n\n**********************************************************\n\n";
 

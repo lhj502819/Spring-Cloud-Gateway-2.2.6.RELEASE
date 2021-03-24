@@ -39,7 +39,8 @@ public class StripPrefixGatewayFilterFactoryIntegrationTests extends BaseWebClie
 
 	@Test
 	public void stripPrefixFilterDefaultValuesWork() {
-		testClient.get().uri("/foo/bar/get").header("Host", "www.stripprefix.org").exchange().expectStatus().isOk();
+		testClient.get().uri("/foo/bar/get").header("Host", "www.stripprefix.org")
+				.exchange().expectStatus().isOk();
 	}
 
 	@EnableAutoConfiguration

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
@@ -40,6 +39,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.event.SmartApplicationListener;
 import org.springframework.core.Ordered;
 import org.springframework.core.style.ToStringCreator;
+import org.springframework.validation.Validator;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -50,7 +50,8 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.W
  * @author Spencer Gibb
  * @author Alexey Nakidkin
  */
-public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartApplicationListener {
+public class WeightCalculatorWebFilter
+		implements WebFilter, Ordered, SmartApplicationListener {
 
 	/**
 	 * Order of Weight Calculator Web filter.
@@ -69,7 +70,23 @@ public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartAppli
 
 	private Map<String, GroupWeightConfig> groupWeights = new ConcurrentHashMap<>();
 
-	private final AtomicBoolean routeLocatorInitialized = new AtomicBoolean();
+	/* for testing */ WeightCalculatorWebFilter() {
+		this.routeLocator = null;
+		this.configurationService = new ConfigurationService();
+	}
+
+	@Deprecated
+	public WeightCalculatorWebFilter(Validator validator) {
+		this(validator, null);
+	}
+
+	@Deprecated
+	public WeightCalculatorWebFilter(Validator validator,
+			ObjectProvider<RouteLocator> routeLocator) {
+		this.routeLocator = routeLocator;
+		this.configurationService = new ConfigurationService();
+		this.configurationService.setValidator(validator);
+	}
 
 	public WeightCalculatorWebFilter(ObjectProvider<RouteLocator> routeLocator,
 			ConfigurationService configurationService) {
@@ -126,16 +143,7 @@ public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartAppli
 		}
 		else if (event instanceof RefreshRoutesEvent && routeLocator != null) {
 			// forces initialization
-			if (routeLocatorInitialized.compareAndSet(false, true)) {
-				// on first time, block so that app fails to start if there are errors in
-				// routes
-				// see gh-1574
-				routeLocator.ifAvailable(locator -> locator.getRoutes().blockLast());
-			}
-			else {
-				// this preserves previous behaviour on refresh, this could likely go away
-				routeLocator.ifAvailable(locator -> locator.getRoutes().subscribe());
-			}
+			routeLocator.ifAvailable(locator -> locator.getRoutes().subscribe());
 		}
 
 	}
@@ -149,13 +157,15 @@ public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartAppli
 
 		WeightConfig config = new WeightConfig(event.getRouteId());
 
-		this.configurationService.with(config).name(WeightConfig.CONFIG_PREFIX).normalizedProperties(args).bind();
+		this.configurationService.with(config).name(WeightConfig.CONFIG_PREFIX)
+				.normalizedProperties(args).bind();
 
 		addWeightConfig(config);
 	}
 
 	private boolean hasRelevantKey(Map<String, Object> args) {
-		return args.keySet().stream().anyMatch(key -> key.startsWith(WeightConfig.CONFIG_PREFIX + "."));
+		return args.keySet().stream()
+				.anyMatch(key -> key.startsWith(WeightConfig.CONFIG_PREFIX + "."));
 	}
 
 	/* for testing */ void addWeightConfig(WeightConfig weightConfig) {
@@ -236,7 +246,8 @@ public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartAppli
 			List<Double> ranges = config.ranges;
 
 			if (log.isTraceEnabled()) {
-				log.trace("Weight for group: " + group + ", ranges: " + ranges + ", r: " + r);
+				log.trace("Weight for group: " + group + ", ranges: " + ranges + ", r: "
+						+ r);
 			}
 
 			for (int i = 0; i < ranges.size() - 1; i++) {
@@ -280,8 +291,10 @@ public class WeightCalculatorWebFilter implements WebFilter, Ordered, SmartAppli
 
 		@Override
 		public String toString() {
-			return new ToStringCreator(this).append("group", group).append("weights", weights)
-					.append("normalizedWeights", normalizedWeights).append("rangeIndexes", rangeIndexes).toString();
+			return new ToStringCreator(this).append("group", group)
+					.append("weights", weights)
+					.append("normalizedWeights", normalizedWeights)
+					.append("rangeIndexes", rangeIndexes).toString();
 		}
 
 	}

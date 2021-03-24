@@ -35,7 +35,8 @@ public class PrincipalNameKeyResolverTests {
 		PrincipalNameKeyResolver keyResolver = new PrincipalNameKeyResolver();
 		ServerWebExchange exchange = mock(ServerWebExchange.class);
 		when(exchange.getPrincipal()).thenReturn(Mono.just(mock(Principal.class)));
-		StepVerifier.create(keyResolver.resolve(exchange)).expectComplete().verify(Duration.ofSeconds(5));
+		StepVerifier.create(keyResolver.resolve(exchange)).expectComplete()
+				.verify(Duration.ofSeconds(5));
 	}
 
 }

@@ -23,14 +23,15 @@ import java.util.function.Predicate;
 
 import javax.validation.constraints.NotEmpty;
 
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ServerWebExchange;
 
 /**
  * @author Spencer Gibb
  */
-public class HeaderRoutePredicateFactory extends AbstractRoutePredicateFactory<HeaderRoutePredicateFactory.Config> {
+public class HeaderRoutePredicateFactory
+		extends AbstractRoutePredicateFactory<HeaderRoutePredicateFactory.Config> {
 
 	/**
 	 * Header key.
@@ -53,20 +54,21 @@ public class HeaderRoutePredicateFactory extends AbstractRoutePredicateFactory<H
 
 	@Override
 	public Predicate<ServerWebExchange> apply(Config config) {
-		boolean hasRegex = !ObjectUtils.isEmpty(config.regexp);
+		boolean hasRegex = !StringUtils.isEmpty(config.regexp);
 
 		return new GatewayPredicate() {
 			@Override
 			public boolean test(ServerWebExchange exchange) {
-				List<String> values = exchange.getRequest().getHeaders().getOrDefault(config.header,
-						Collections.emptyList());
+				List<String> values = exchange.getRequest().getHeaders()
+						.getOrDefault(config.header, Collections.emptyList());
 				if (values.isEmpty()) {
 					return false;
 				}
 				// values is now guaranteed to not be empty
 				if (hasRegex) {
 					// check if a header value matches
-					return values.stream().anyMatch(value -> value.matches(config.regexp));
+					return values.stream()
+							.anyMatch(value -> value.matches(config.regexp));
 				}
 
 				// there is a value and since regexp is empty, we only check existence.
@@ -75,7 +77,8 @@ public class HeaderRoutePredicateFactory extends AbstractRoutePredicateFactory<H
 
 			@Override
 			public String toString() {
-				return String.format("Header: %s regexp=%s", config.header, config.regexp);
+				return String.format("Header: %s regexp=%s", config.header,
+						config.regexp);
 			}
 		};
 	}

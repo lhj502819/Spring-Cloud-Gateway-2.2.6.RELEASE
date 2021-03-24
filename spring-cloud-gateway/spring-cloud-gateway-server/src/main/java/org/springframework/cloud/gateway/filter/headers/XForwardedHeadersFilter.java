@@ -24,12 +24,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ORIGINAL_REQUEST_URL_ATTR;
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR;
+import static org.springframework.util.StringUtils.isEmpty;
 
 @ConfigurationProperties("spring.cloud.gateway.x-forwarded")
 public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
@@ -201,9 +201,11 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 		HttpHeaders original = input;
 		HttpHeaders updated = new HttpHeaders();
 
-		original.entrySet().stream().forEach(entry -> updated.addAll(entry.getKey(), entry.getValue()));
+		original.entrySet().stream()
+				.forEach(entry -> updated.addAll(entry.getKey(), entry.getValue()));
 
-		if (isForEnabled() && request.getRemoteAddress() != null && request.getRemoteAddress().getAddress() != null) {
+		if (isForEnabled() && request.getRemoteAddress() != null
+				&& request.getRemoteAddress().getAddress() != null) {
 			String remoteAddr = request.getRemoteAddress().getAddress().getHostAddress();
 			write(updated, X_FORWARDED_FOR_HEADER, remoteAddr, isForAppend());
 		}
@@ -221,7 +223,8 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 			// - see XForwardedHeadersFilterTests, so first get uris, then extract paths
 			// and remove one from another if it's the ending part.
 
-			LinkedHashSet<URI> originalUris = exchange.getAttribute(GATEWAY_ORIGINAL_REQUEST_URL_ATTR);
+			LinkedHashSet<URI> originalUris = exchange
+					.getAttribute(GATEWAY_ORIGINAL_REQUEST_URL_ATTR);
 			URI requestUri = exchange.getAttribute(GATEWAY_REQUEST_URL_ATTR);
 
 			if (originalUris != null && requestUri != null) {
@@ -236,7 +239,8 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 						String originalUriPath = stripTrailingSlash(originalUri);
 						String requestUriPath = stripTrailingSlash(requestUri);
 
-						updateRequest(updated, originalUri, originalUriPath, requestUriPath);
+						updateRequest(updated, originalUri, originalUriPath,
+								requestUriPath);
 
 					}
 				});
@@ -259,18 +263,20 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 		return updated;
 	}
 
-	private void updateRequest(HttpHeaders updated, URI originalUri, String originalUriPath, String requestUriPath) {
+	private void updateRequest(HttpHeaders updated, URI originalUri,
+			String originalUriPath, String requestUriPath) {
 		String prefix;
 		if (requestUriPath != null && (originalUriPath.endsWith(requestUriPath))) {
 			prefix = substringBeforeLast(originalUriPath, requestUriPath);
-			if (prefix != null && prefix.length() > 0 && prefix.length() <= originalUri.getPath().length()) {
+			if (prefix != null && prefix.length() > 0
+					&& prefix.length() <= originalUri.getPath().length()) {
 				write(updated, X_FORWARDED_PREFIX_HEADER, prefix, isPrefixAppend());
 			}
 		}
 	}
 
 	private static String substringBeforeLast(String str, String separator) {
-		if (ObjectUtils.isEmpty(str) || ObjectUtils.isEmpty(separator)) {
+		if (isEmpty(str) || isEmpty(separator)) {
 			return str;
 		}
 		int pos = str.lastIndexOf(separator);

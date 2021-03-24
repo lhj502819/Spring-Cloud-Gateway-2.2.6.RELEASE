@@ -52,18 +52,22 @@ public class MapRequestHeaderGatewayFilterFactoryTests extends BaseWebClientTest
 
 	@Test
 	public void mapRequestHeaderFilterWorks() {
-		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org").header("a", "tome").exchange()
-				.expectBody(Map.class).consumeWith(result -> {
-					Map<String, Object> headers = getMap(result.getResponseBody(), "headers");
+		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org")
+				.header("a", "tome").exchange().expectBody(Map.class)
+				.consumeWith(result -> {
+					Map<String, Object> headers = getMap(result.getResponseBody(),
+							"headers");
 					assertThat(headers).containsEntry("X-Request-Example", "tome");
 				});
 	}
 
 	@Test
 	public void mapRequestHeaderFilterWorksJavaDsl() {
-		testClient.get().uri("/headers").header("Host", "www.maprequestheaderjava.org").header("b", "tome").exchange()
-				.expectBody(Map.class).consumeWith(result -> {
-					Map<String, Object> headers = getMap(result.getResponseBody(), "headers");
+		testClient.get().uri("/headers").header("Host", "www.maprequestheaderjava.org")
+				.header("b", "tome").exchange().expectBody(Map.class)
+				.consumeWith(result -> {
+					Map<String, Object> headers = getMap(result.getResponseBody(),
+							"headers");
 					assertThat(headers).containsEntry("X-Request-Example-Java", "tome");
 				});
 	}
@@ -71,9 +75,11 @@ public class MapRequestHeaderGatewayFilterFactoryTests extends BaseWebClientTest
 	@SuppressWarnings("unchecked")
 	@Test
 	public void mapRequestHeaderWithMultiValueFilterWorks() {
-		testClient.get().uri("/multivalueheaders").header("Host", "www.maprequestheader.org")
-				.header("a", "tome", "toyou").exchange().expectBody(Map.class).consumeWith(result -> {
-					Map<String, Object> headers = getMap(result.getResponseBody(), "headers");
+		testClient.get().uri("/multivalueheaders")
+				.header("Host", "www.maprequestheader.org").header("a", "tome", "toyou")
+				.exchange().expectBody(Map.class).consumeWith(result -> {
+					Map<String, Object> headers = getMap(result.getResponseBody(),
+							"headers");
 					assertThat(headers).containsKey("X-Request-Example");
 					List<String> values = (List<String>) headers.get("X-Request-Example");
 					assertThat(values).contains("tome", "toyou");
@@ -82,25 +88,29 @@ public class MapRequestHeaderGatewayFilterFactoryTests extends BaseWebClientTest
 
 	@Test
 	public void mapRequestHeaderWithNullValueFilterWorks() {
-		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org").header("a", (String) null)
-				.exchange().expectBody(Map.class).consumeWith(result -> {
-					Map<String, Object> headers = getMap(result.getResponseBody(), "headers");
+		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org")
+				.header("a", (String) null).exchange().expectBody(Map.class)
+				.consumeWith(result -> {
+					Map<String, Object> headers = getMap(result.getResponseBody(),
+							"headers");
 					assertThat(headers).doesNotContainKey("X-Request-Example");
 				});
 	}
 
 	@Test
 	public void mapRequestHeaderWhenInputHeaderDoesNotExist() {
-		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org").exchange().expectBody(Map.class)
-				.consumeWith(result -> {
-					Map<String, Object> headers = getMap(result.getResponseBody(), "headers");
+		testClient.get().uri("/headers").header("Host", "www.maprequestheader.org")
+				.exchange().expectBody(Map.class).consumeWith(result -> {
+					Map<String, Object> headers = getMap(result.getResponseBody(),
+							"headers");
 					assertThat(headers).doesNotContainKey("X-Request-Example");
 				});
 	}
 
 	@Test
 	public void toStringFormat() {
-		Config config = new Config().setFromHeader("myfromheader").setToHeader("mytoheader");
+		Config config = new Config().setFromHeader("myfromheader")
+				.setToHeader("mytoheader");
 		GatewayFilter filter = new MapRequestHeaderGatewayFilterFactory().apply(config);
 		assertThat(filter.toString()).contains("myfromheader").contains("mytoheader");
 	}
@@ -117,7 +127,8 @@ public class MapRequestHeaderGatewayFilterFactoryTests extends BaseWebClientTest
 		public RouteLocator testRouteLocator(RouteLocatorBuilder builder) {
 			return builder.routes().route("map_request_header_java_test",
 					r -> r.path("/headers").and().host("**.maprequestheaderjava.org")
-							.filters(f -> f.prefixPath("/httpbin").mapRequestHeader("b", "X-Request-Example-Java"))
+							.filters(f -> f.prefixPath("/httpbin").mapRequestHeader("b",
+									"X-Request-Example-Java"))
 							.uri(uri))
 					.build();
 		}

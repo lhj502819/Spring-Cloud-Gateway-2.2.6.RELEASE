@@ -34,9 +34,16 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.C
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.CACHED_SERVER_HTTP_REQUEST_DECORATOR_ATTR;
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR;
 
-public class AdaptCachedBodyGlobalFilter implements GlobalFilter, Ordered, ApplicationListener<EnableBodyCachingEvent> {
+public class AdaptCachedBodyGlobalFilter
+		implements GlobalFilter, Ordered, ApplicationListener<EnableBodyCachingEvent> {
 
 	private ConcurrentMap<String, Boolean> routesToCache = new ConcurrentHashMap<>();
+
+	/**
+	 * Cached request body key.
+	 */
+	@Deprecated
+	public static final String CACHED_REQUEST_BODY_KEY = CACHED_REQUEST_BODY_ATTR;
 
 	@Override
 	public void onApplicationEvent(EnableBodyCachingEvent event) {
@@ -48,8 +55,8 @@ public class AdaptCachedBodyGlobalFilter implements GlobalFilter, Ordered, Appli
 		// the cached ServerHttpRequest is used when the ServerWebExchange can not be
 		// mutated, for example, during a predicate where the body is read, but still
 		// needs to be cached.
-		ServerHttpRequest cachedRequest = exchange.getAttributeOrDefault(CACHED_SERVER_HTTP_REQUEST_DECORATOR_ATTR,
-				null);
+		ServerHttpRequest cachedRequest = exchange
+				.getAttributeOrDefault(CACHED_SERVER_HTTP_REQUEST_DECORATOR_ATTR, null);
 		if (cachedRequest != null) {
 			exchange.getAttributes().remove(CACHED_SERVER_HTTP_REQUEST_DECORATOR_ATTR);
 			return chain.filter(exchange.mutate().request(cachedRequest).build());

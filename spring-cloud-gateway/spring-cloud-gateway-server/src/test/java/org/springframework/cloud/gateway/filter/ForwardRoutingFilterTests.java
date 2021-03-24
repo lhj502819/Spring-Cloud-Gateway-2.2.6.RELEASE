@@ -65,7 +65,8 @@ public class ForwardRoutingFilterTests {
 
 	@Before
 	public void setup() {
-		exchange = MockServerWebExchange.from(MockServerHttpRequest.get("localendpoint").build());
+		exchange = MockServerWebExchange
+				.from(MockServerHttpRequest.get("localendpoint").build());
 		when(objectProvider.getIfAvailable()).thenReturn(this.dispatcherHandler);
 	}
 
@@ -82,7 +83,8 @@ public class ForwardRoutingFilterTests {
 
 	@Test
 	public void shouldFilterWhenGatewayRequestUrlSchemeIsForward() {
-		URI uri = UriComponentsBuilder.fromUriString("forward://endpoint").build().toUri();
+		URI uri = UriComponentsBuilder.fromUriString("forward://endpoint").build()
+				.toUri();
 		exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, uri);
 
 		assertThat(exchange.getAttributes().get(GATEWAY_ALREADY_ROUTED_ATTR)).isNull();
@@ -98,10 +100,12 @@ public class ForwardRoutingFilterTests {
 	@Test
 	public void shouldFilterAndKeepHostPathAsSpecified() {
 
-		URI uri = UriComponentsBuilder.fromUriString("forward://host/outage").build().toUri();
+		URI uri = UriComponentsBuilder.fromUriString("forward://host/outage").build()
+				.toUri();
 		exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, uri);
 
-		ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+		ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor
+				.forClass(ServerWebExchange.class);
 
 		forwardRoutingFilter.filter(exchange, chain);
 

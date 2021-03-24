@@ -16,6 +16,7 @@
 
 package org.springframework.cloud.gateway.filter.factory.rewrite;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.reactivestreams.Publisher;
@@ -40,8 +41,8 @@ public class CachedBodyOutputMessage implements ReactiveHttpOutputMessage {
 
 	private boolean cached = false;
 
-	private Flux<DataBuffer> body = Flux
-			.error(new IllegalStateException("The body is not set. " + "Did handling complete with success?"));
+	private Flux<DataBuffer> body = Flux.error(new IllegalStateException(
+			"The body is not set. " + "Did handling complete with success?"));
 
 	public CachedBodyOutputMessage(ServerWebExchange exchange, HttpHeaders httpHeaders) {
 		this.bufferFactory = exchange.getResponse().bufferFactory();
@@ -80,6 +81,11 @@ public class CachedBodyOutputMessage implements ReactiveHttpOutputMessage {
 		return this.body;
 	}
 
+	@Deprecated
+	public void setWriteHandler(Function<Flux<DataBuffer>, Mono<Void>> writeHandler) {
+
+	}
+
 	public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
 		this.body = Flux.from(body);
 		this.cached = true;
@@ -87,7 +93,8 @@ public class CachedBodyOutputMessage implements ReactiveHttpOutputMessage {
 	}
 
 	@Override
-	public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> body) {
+	public Mono<Void> writeAndFlushWith(
+			Publisher<? extends Publisher<? extends DataBuffer>> body) {
 		return writeWith(Flux.from(body).flatMap(p -> p));
 	}
 

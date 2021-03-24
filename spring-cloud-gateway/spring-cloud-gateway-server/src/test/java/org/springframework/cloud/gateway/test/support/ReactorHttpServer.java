@@ -36,8 +36,8 @@ public class ReactorHttpServer extends AbstractHttpServer {
 	@Override
 	protected void initServer() {
 		this.reactorHandler = createHttpHandlerAdapter();
-		this.reactorServer = reactor.netty.http.server.HttpServer.create().host(getHost()).port(getPort());
-
+		this.reactorServer = reactor.netty.http.server.HttpServer.create()
+				.tcpConfiguration(server -> server.host(getHost())).port(getPort());
 	}
 
 	private ReactorHttpHandlerAdapter createHttpHandlerAdapter() {
@@ -46,8 +46,9 @@ public class ReactorHttpServer extends AbstractHttpServer {
 
 	@Override
 	protected void startInternal() {
-		DisposableServer server = this.reactorServer.handle(this.reactorHandler).bind().block();
-		setPort(server.port());
+		DisposableServer server = this.reactorServer.handle(this.reactorHandler).bind()
+				.block();
+		setPort(server.address().getPort());
 		this.serverRef.set(server);
 	}
 
