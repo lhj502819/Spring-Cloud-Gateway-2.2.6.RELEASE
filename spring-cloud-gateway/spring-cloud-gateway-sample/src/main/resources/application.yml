@@ -13,8 +13,13 @@ spring:
       default-filters:
       - PrefixPath=/httpbin
       - AddResponseHeader=X-Response-Default-Foo, Default-Bar
-
       routes:
+      - id: user-service #路由的编号(唯一)
+        uri: http://127.0.0.1:8080 #路由到的目标地址
+        predicates: # 断言，作为路由的匹配条件 对应RouteDefinition，可以配置多个
+          - Path=/login,/loginUser
+        filters:
+          - StripPrefix=1 #下边说
       # =====================================
       # to run server
       # $ wscat --listen 9000
