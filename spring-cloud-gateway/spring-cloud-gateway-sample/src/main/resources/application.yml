@@ -6,37 +6,13 @@ test:
 
 
 spring:
-  jmx:
-    enabled: false
   cloud:
     gateway:
-      default-filters:
-      - PrefixPath=/httpbin
-      - AddResponseHeader=X-Response-Default-Foo, Default-Bar
       routes:
-      - id: user-service #路由的编号(唯一)
-        uri: http://127.0.0.1:8080 #路由到的目标地址
-        predicates: # 断言，作为路由的匹配条件 对应RouteDefinition，可以配置多个
-          - Path=/login,/loginUser
-        filters:
-          - StripPrefix=1 #下边说
-      # =====================================
-      # to run server
-      # $ wscat --listen 9000
-      # to run client
-      # $ wscat --connect ws://localhost:8080/echo
-      - id: websocket_test
-        uri: ws://localhost:9000
-        order: 9000
+      - id: hello_route
+        uri: http://localhost:8088/api/hello
         predicates:
-        - Path=/echo
-      # =====================================
-      - id: default_path_to_httpbin
-        uri: ${test.uri}
-        order: 10000
-        predicates:
-        - Path=/**
-
+        - RemoteAddr=name,502819.*
 logging:
   level:
     org.springframework.cloud.gateway: TRACE
