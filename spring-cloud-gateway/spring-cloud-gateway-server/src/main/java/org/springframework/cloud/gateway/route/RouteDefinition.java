@@ -40,15 +40,27 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 @Validated
 public class RouteDefinition {
 
+	/**
+	 * 路由ID，如果配置为空则SCG会生成随机生成一个 {@link CompositeRouteDefinitionLocator#getRouteDefinitions}
+	 */
 	private String id;
 
+	/**
+	 *  配置的断言信息
+	 */
 	@NotEmpty
 	@Valid
 	private List<PredicateDefinition> predicates = new ArrayList<>();
 
+	/**
+	 * 配置的过滤器信息
+	 */
 	@Valid
 	private List<FilterDefinition> filters = new ArrayList<>();
 
+	/**
+	 * 需要转发到的目的URI
+	 */
 	@NotNull
 	private URI uri;
 

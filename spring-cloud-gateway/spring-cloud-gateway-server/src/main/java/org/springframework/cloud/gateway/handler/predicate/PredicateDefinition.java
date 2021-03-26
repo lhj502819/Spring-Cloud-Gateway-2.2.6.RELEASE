@@ -34,9 +34,15 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 @Validated
 public class PredicateDefinition {
 
+	/**
+	 * 断言的名称，与{@link AbstractRoutePredicateFactory}的子类名称前缀相同
+	 */
 	@NotNull
 	private String name;
 
+	/**
+	 * 断言的参数  key:_genkey_0 value:/login
+	 */
 	private Map<String, String> args = new LinkedHashMap<>();
 
 	public PredicateDefinition() {
@@ -49,9 +55,9 @@ public class PredicateDefinition {
 					+ text + "'" + ", must be of the form name=value");
 		}
 		setName(text.substring(0, eqIdx));
-
+		//将配置的字符串参数中"="右边的字符串以","分割
 		String[] args = tokenizeToStringArray(text.substring(eqIdx + 1), ",");
-
+		//遍历","分割后的结果，随机生成一个key(_genkey_+参数下标)，value为参数
 		for (int i = 0; i < args.length; i++) {
 			this.args.put(NameUtils.generateName(i), args[i]);
 		}
