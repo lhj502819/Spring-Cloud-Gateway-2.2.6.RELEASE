@@ -137,7 +137,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 				.concatMap(route -> Mono.just(route).filterWhen(r -> {
 					// add the current route we are testing
 					exchange.getAttributes().put(GATEWAY_PREDICATE_ROUTE_ATTR, r.getId());
-					//根据断言获取到真正的Route
+					//根据断言判断当前请求是否满足条件
 					return r.getPredicate().apply(exchange);
 				})
 						// instead of immediately stopping main flux due to error, log and

@@ -87,9 +87,10 @@ public class WeightRoutePredicateFactory
 		return new GatewayPredicate() {
 			@Override
 			public boolean test(ServerWebExchange exchange) {
+				//获取到所有的权重信息，key：group ，value：路由ID
 				Map<String, String> weights = exchange.getAttributeOrDefault(WEIGHT_ATTR,
 						Collections.emptyMap());
-
+				//获取到当前遍历的路由ID
 				String routeId = exchange.getAttribute(GATEWAY_PREDICATE_ROUTE_ATTR);
 
 				// all calculations and comparison against random num happened in
