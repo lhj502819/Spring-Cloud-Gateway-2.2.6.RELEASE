@@ -62,22 +62,29 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
+		//判断上下中是否有GATEWAY_ROUTE_ATTR，在RoutePredicateHandlerMapping中放入的
+		//如果没有则不执行
 		if (route == null) {
 			return chain.filter(exchange);
 		}
 		log.trace("RouteToRequestUrlFilter start");
+		//获取请求的URI
 		URI uri = exchange.getRequest().getURI();
+		//判断是否包含编码的部分，如%
 		boolean encoded = containsEncodedParts(uri);
+		//获取Route的uri
 		URI routeUri = route.getUri();
 
+		//判断是否为其他类型的协议 如：lb，则会将lb去掉
 		if (hasAnotherScheme(routeUri)) {
 			// this is a special url, save scheme to special attribute
 			// replace routeUri with schemeSpecificPart
+			//将当前请求的schema放入上下文中
 			exchange.getAttributes().put(GATEWAY_SCHEME_PREFIX_ATTR,
 					routeUri.getScheme());
 			routeUri = URI.create(routeUri.getSchemeSpecificPart());
 		}
-
+		//如果RouteUri以lb开头，必须请求中带有host
 		if ("lb".equalsIgnoreCase(routeUri.getScheme()) && routeUri.getHost() == null) {
 			// Load balanced URIs should always have a host. If the host is null it is
 			// most
@@ -85,7 +92,10 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 			// underscore)
 			throw new IllegalStateException("Invalid host: " + routeUri.toString());
 		}
-
+		//生成RequestURL，并放入上下文中
+		//此处生成的URL的Path最终会以请求的Path为主，会覆盖真正的RouteUri，
+		// 例如RouteUri为http://localhost:8088/api/hello，请求的URI为http://localhost:8080/api，
+		// 	那此处生成的URL为http://localhost:8080/api
 		URI mergedUrl = UriComponentsBuilder.fromUri(uri)
 				// .uri(routeUri)
 				.scheme(routeUri.getScheme()).host(routeUri.getHost())

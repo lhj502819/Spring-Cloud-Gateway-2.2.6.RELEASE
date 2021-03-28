@@ -232,6 +232,7 @@ public class RouteDefinitionRouteLocator
 			if (gatewayFilter instanceof Ordered) {
 				ordered.add(gatewayFilter);
 			} else {
+				//如果没有实现Ordered接口，则根据遍历的顺序排序
 				ordered.add(new OrderedGatewayFilter(gatewayFilter, i + 1));
 			}
 		}
@@ -312,7 +313,7 @@ public class RouteDefinitionRouteLocator
 						RouteDefinitionRouteLocator.this, route.getId(), properties))
 				.bind();
 		// @formatter:on
-		//生成异步断言
+		//生成异步断言绑定对应Config
 		return factory.applyAsync(config);
 	}
 

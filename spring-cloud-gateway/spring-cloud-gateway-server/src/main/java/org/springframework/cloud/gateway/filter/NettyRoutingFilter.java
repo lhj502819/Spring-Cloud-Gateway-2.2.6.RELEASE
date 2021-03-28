@@ -105,35 +105,46 @@ public class NettyRoutingFilter implements GlobalFilter, Ordered {
 	@Override
 	@SuppressWarnings("Duplicates")
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		/**
+		 * 从上下文中获取在{@link RouteToRequestUrlFilter}中放入的请求URL
+		 */
 		URI requestUrl = exchange.getRequiredAttribute(GATEWAY_REQUEST_URL_ATTR);
-
+		//获取请求的协议
 		String scheme = requestUrl.getScheme();
+		//如果该请求已经被处理过，或者请求协议不是http/https，则不处理
 		if (isAlreadyRouted(exchange)
 				|| (!"http".equals(scheme) && !"https".equals(scheme))) {
 			return chain.filter(exchange);
 		}
+		//设置当前请求已被处理过
 		setAlreadyRouted(exchange);
-
+		//获取请求
 		ServerHttpRequest request = exchange.getRequest();
-
+		//获取请求方式
 		final HttpMethod method = HttpMethod.valueOf(request.getMethodValue());
+		//获取请求的URI
 		final String url = requestUrl.toASCIIString();
-
+		//执行请求头Filter，如ForwardedHeadersFilter、RemoveHopByHopHeadersFilter、XForwardedHeadersFilter
 		HttpHeaders filtered = filterRequest(getHeadersFilters(), exchange);
 
 		final DefaultHttpHeaders httpHeaders = new DefaultHttpHeaders();
+		//基于filter过后的请求头创建Http请求头
 		filtered.forEach(httpHeaders::set);
 
 		boolean preserveHost = exchange
 				.getAttributeOrDefault(PRESERVE_HOST_HEADER_ATTRIBUTE, false);
-		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
 
+		//获取路由
+		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
+		//创建HttpClient
 		Flux<HttpClientResponse> responseFlux = getHttpClient(route, exchange)
 				.headers(headers -> {
+					//添加请求头
 					headers.add(httpHeaders);
 					// Will either be set below, or later by Netty
+					//移除HOST
 					headers.remove(HttpHeaders.HOST);
-					if (preserveHost) {
+					if (preserveHost) {//判断是否需要增加HOST
 						String host = request.getHeaders().getFirst(HttpHeaders.HOST);
 						headers.add(HttpHeaders.HOST, host);
 					}
@@ -150,7 +161,9 @@ public class NettyRoutingFilter implements GlobalFilter, Ordered {
 					// Defer committing the response until all route filters have run
 					// Put client response as ServerWebExchange attribute and write
 					// response later NettyWriteResponseFilter
+					//将调用真实服务返回的Response放入上下文，但NettyWriteResponseFilter中也没有用
 					exchange.getAttributes().put(CLIENT_RESPONSE_ATTR, res);
+					//将Netty Channle放入上下文供NettyWriteResponseFilter使用
 					exchange.getAttributes().put(CLIENT_RESPONSE_CONN_ATTR, connection);
 
 					ServerHttpResponse response = exchange.getResponse();
@@ -191,9 +204,10 @@ public class NettyRoutingFilter implements GlobalFilter, Ordered {
 
 					return Mono.just(res);
 				});
-
+		//获取响应超时时间
 		Duration responseTimeout = getResponseTimeout(route);
 		if (responseTimeout != null) {
+			//设置获取响应超时时间
 			responseFlux = responseFlux
 					.timeout(responseTimeout, Mono.error(new TimeoutException(
 							"Response took longer than timeout: " + responseTimeout)))

@@ -32,7 +32,10 @@ public class RemoveCachedBodyFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-		return chain.filter(exchange).doFinally(s -> {
+
+		//调用下一个filter
+		return chain.filter(exchange).doFinally(s -> {//doFinally表示最终执行的操作
+			//清除缓存
 			Object attribute = exchange.getAttributes().remove(CACHED_REQUEST_BODY_ATTR);
 			if (attribute != null && attribute instanceof PooledDataBuffer) {
 				PooledDataBuffer dataBuffer = (PooledDataBuffer) attribute;

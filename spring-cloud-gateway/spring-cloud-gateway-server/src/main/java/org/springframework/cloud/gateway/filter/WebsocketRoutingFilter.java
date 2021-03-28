@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.web.reactive.socket.server.support.HandshakeWebSocketService;
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -94,11 +95,12 @@ public class WebsocketRoutingFilter implements GlobalFilter, Ordered {
 
 		URI requestUrl = exchange.getRequiredAttribute(GATEWAY_REQUEST_URL_ATTR);
 		String scheme = requestUrl.getScheme();
-
+		//只处理协议为ws或者wss的
 		if (isAlreadyRouted(exchange)
 				|| (!"ws".equals(scheme) && !"wss".equals(scheme))) {
 			return chain.filter(exchange);
 		}
+		//设置为已被处理，后边的NettyRoutingFilter或者WebClientHttpRoutingFilter则不会执行
 		setAlreadyRouted(exchange);
 
 		HttpHeaders headers = exchange.getRequest().getHeaders();
@@ -110,7 +112,9 @@ public class WebsocketRoutingFilter implements GlobalFilter, Ordered {
 					header -> Arrays.stream(commaDelimitedListToStringArray(header)))
 					.map(String::trim).collect(Collectors.toList());
 		}
-
+		/**
+		 * 通过{@link HandshakeWebSocketService}去转发的请求
+		 */
 		return this.webSocketService.handleRequest(exchange, new ProxyWebSocketHandler(
 				requestUrl, this.webSocketClient, filtered, protocols));
 	}

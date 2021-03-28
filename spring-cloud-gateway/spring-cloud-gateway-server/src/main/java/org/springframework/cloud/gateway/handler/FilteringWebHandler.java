@@ -110,9 +110,10 @@ public class FilteringWebHandler implements WebHandler {
 
 		DefaultGatewayFilterChain(List<GatewayFilter> filters) {
 			this.filters = filters;
+			//在FilteringWebHandler的handle方法中初始化时设置当前应调用的过滤器下标为0，也就是第一个
 			this.index = 0;
 		}
-
+		//在filter方法中调用，传入过滤器链和需要执行的过滤器index
 		private DefaultGatewayFilterChain(DefaultGatewayFilterChain parent, int index) {
 			this.filters = parent.getFilters();
 			this.index = index;
@@ -125,8 +126,11 @@ public class FilteringWebHandler implements WebHandler {
 		@Override
 		public Mono<Void> filter(ServerWebExchange exchange) {
 			return Mono.defer(() -> {
+				//判断是否已经执行过所有的过滤器
 				if (this.index < filters.size()) {
+					//取出当前需执行的过滤器
 					GatewayFilter filter = filters.get(this.index);
+					//每个Filter都创建一个DefaultGatewayFilterChain去执行
 					DefaultGatewayFilterChain chain = new DefaultGatewayFilterChain(this,
 							this.index + 1);
 					return filter.filter(exchange, chain);

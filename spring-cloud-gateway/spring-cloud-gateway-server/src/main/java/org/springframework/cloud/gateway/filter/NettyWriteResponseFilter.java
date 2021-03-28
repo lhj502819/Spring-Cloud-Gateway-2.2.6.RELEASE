@@ -21,6 +21,7 @@ import java.util.List;
 import io.netty.buffer.ByteBuf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
@@ -68,6 +69,10 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 		return chain.filter(exchange)
 				.doOnError(throwable -> cleanup(exchange))
 				.then(Mono.defer(() -> {
+					/**
+					 * 从上下文中获取CLIENT_RESPONSE_CONN_ATTR，Connection是对NettyChannel的封装
+					 * CLIENT_RESPONSE_CONN_ATTR是在{@link NettyRoutingFilter#filter}中放入的
+					 */
 					Connection connection = exchange.getAttribute(CLIENT_RESPONSE_CONN_ATTR);
 
 					if (connection == null) {
@@ -81,6 +86,10 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 					ServerHttpResponse response = exchange.getResponse();
 
 					// TODO: needed?
+					/**
+					 *将byteBuf转换为DateBuff，
+					 * 因为{@link org.springframework.http.ReactiveHttpOutputMessage#writeWith(Publisher)}需要DateBuff类型的
+					 */
 					final Flux<DataBuffer> body = connection
 							.inbound()
 							.receive()
@@ -96,6 +105,7 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 							log.trace("invalid media type", e);
 						}
 					}
+					//将NettyResponse写回给客户端
 					return (isStreamingMediaType(contentType)
 							? response.writeAndFlushWith(body.map(Flux::just))
 							: response.writeWith(body));

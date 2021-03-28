@@ -10,17 +10,10 @@ spring:
     gateway:
       routes:
         - id: hello_route
-          uri: http://localhost:8088/api/hello
+          uri: lb:ws://httpbin
           predicates:
-            - Weight=group1,2
-        - id: hello_route2
-          uri: http://localhost:8089/api/hello
-          predicates:
-            - Weight=group1,7
-        - id: hello_route3
-          uri: http://localhost:8089/api/hello
-          predicates:
-            - Weight=group1,1
+            - Path=/api
+
 logging:
   level:
     org.springframework.cloud.gateway: TRACE
