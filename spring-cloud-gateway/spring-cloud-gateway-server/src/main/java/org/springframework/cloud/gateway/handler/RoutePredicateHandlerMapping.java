@@ -88,7 +88,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 			return Mono.empty();
 		}
 		exchange.getAttributes().put(GATEWAY_HANDLER_MAPPER_ATTR, getSimpleName());
-		//查找路由
+		// 查找路由
 		return lookupRoute(exchange)
 				// .log("route-predicate-handler-mapping", Level.FINER) //name this
 				.flatMap((Function<Route, Mono<?>>) r -> {
@@ -130,14 +130,14 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	protected Mono<Route> lookupRoute(ServerWebExchange exchange) {
-		//调用的CachingRouteLocator#getRoutes
+		// 调用的CachingRouteLocator#getRoutes
 		return this.routeLocator.getRoutes()
 				// individually filter routes so that filterWhen error delaying is not a
 				// problem
 				.concatMap(route -> Mono.just(route).filterWhen(r -> {
 					// add the current route we are testing
 					exchange.getAttributes().put(GATEWAY_PREDICATE_ROUTE_ATTR, r.getId());
-					//根据断言判断当前请求是否满足条件
+					// 根据断言判断当前请求是否满足条件
 					return r.getPredicate().apply(exchange);
 				})
 						// instead of immediately stopping main flux due to error, log and
@@ -155,7 +155,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Route matched: " + route.getId());
 					}
-					//校验方法并没有实现，可以自己继承实现
+					// 校验方法并没有实现，可以自己继承实现
 					validateRoute(route, exchange);
 					return route;
 				});

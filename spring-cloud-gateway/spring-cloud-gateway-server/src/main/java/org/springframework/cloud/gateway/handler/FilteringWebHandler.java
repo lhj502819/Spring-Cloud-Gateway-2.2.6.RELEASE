@@ -57,19 +57,18 @@ public class FilteringWebHandler implements WebHandler {
 
 	/**
 	 * 此方法主要是将GlobalFilter适配为GatewayFilter
-	 *
 	 * @param filters
 	 * @return
 	 */
 	private static List<GatewayFilter> loadFilters(List<GlobalFilter> filters) {
 		return filters.stream().map(filter -> {
-			//通过GatewayFilterAdapter将GlobalFilter适配为GatewayFilter
+			// 通过GatewayFilterAdapter将GlobalFilter适配为GatewayFilter
 			GatewayFilterAdapter gatewayFilter = new GatewayFilterAdapter(filter);
-			//判断GlobalFilter是否实现了Ordered接口
+			// 判断GlobalFilter是否实现了Ordered接口
 			if (filter instanceof Ordered) {
 				int order = ((Ordered) filter).getOrder();
-				//OrderedGatewayFilter是一个有序的网关过滤器实现类，在FilterChain，过滤器数组会首先按照order进行圣墟排序，按顺序过滤请求
-				//返回OrderedGatewayFilter
+				// OrderedGatewayFilter是一个有序的网关过滤器实现类，在FilterChain，过滤器数组会首先按照order进行圣墟排序，按顺序过滤请求
+				// 返回OrderedGatewayFilter
 				return new OrderedGatewayFilter(gatewayFilter, order);
 			}
 			return gatewayFilter;
@@ -83,22 +82,22 @@ public class FilteringWebHandler implements WebHandler {
 
 	@Override
 	public Mono<Void> handle(ServerWebExchange exchange) {
-		//获取到路由
+		// 获取到路由
 		Route route = exchange.getRequiredAttribute(GATEWAY_ROUTE_ATTR);
-		//获取到路由的Filter
+		// 获取到路由的Filter
 		List<GatewayFilter> gatewayFilters = route.getFilters();
 
 		List<GatewayFilter> combined = new ArrayList<>(this.globalFilters);
-		//将GlobalFilter和路由的Filter合并
+		// 将GlobalFilter和路由的GatewayFilter合并
 		combined.addAll(gatewayFilters);
 		// TODO: needed or cached?
-		//对Filter排序
+		// 对Filter排序
 		AnnotationAwareOrderComparator.sort(combined);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug("Sorted gatewayFilterFactories: " + combined);
 		}
-		//创建FilterChain
+		// 创建FilterChain
 		return new DefaultGatewayFilterChain(combined).filter(exchange);
 	}
 
@@ -134,7 +133,8 @@ public class FilteringWebHandler implements WebHandler {
 					DefaultGatewayFilterChain chain = new DefaultGatewayFilterChain(this,
 							this.index + 1);
 					return filter.filter(exchange, chain);
-				} else {
+				}
+				else {
 					return Mono.empty(); // complete
 				}
 			});

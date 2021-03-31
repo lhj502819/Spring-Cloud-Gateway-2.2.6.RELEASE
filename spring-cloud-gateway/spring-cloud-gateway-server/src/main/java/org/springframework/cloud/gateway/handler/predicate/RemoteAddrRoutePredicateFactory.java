@@ -71,6 +71,10 @@ public class RemoteAddrRoutePredicateFactory
 
 	@Override
 	public Predicate<ServerWebExchange> apply(Config config) {
+		/**
+		 * IpSubnetFilterRule是Netty中定义的IP过滤规则
+		 */
+		//根据配置的sources生成对应规则
 		List<IpSubnetFilterRule> sources = convert(config.sources);
 
 		return new GatewayPredicate() {
@@ -86,7 +90,7 @@ public class RemoteAddrRoutePredicateFactory
 						log.debug("Remote addresses didn't match " + hostAddress + " != "
 								+ host);
 					}
-
+					//只要符合任意一个规则就返回true
 					for (IpSubnetFilterRule source : sources) {
 						if (source.matches(remoteAddress)) {
 							return true;

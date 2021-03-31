@@ -19,7 +19,11 @@ package org.springframework.cloud.gateway.sample;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.gateway.config.conditional.ConditionalOnEnabledPredicate;
+import org.springframework.cloud.gateway.sample.predicate.BlackRemoteAddrRoutePredicateFactory;
+import org.springframework.cloud.gateway.sample.route.RedisRouteDefinitionRepository;
+import org.springframework.cloud.gateway.sample.operator.RedidRouteDefinitionRepositoryOperator;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +33,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.RequestPredicates;
@@ -42,7 +45,6 @@ import org.springframework.web.reactive.function.server.ServerResponse;
  */
 @SpringBootConfiguration
 @EnableAutoConfiguration
-@Import(AdditionalRoutes.class)
 public class GatewaySampleApplication {
 
 	public static final String HELLO_FROM_FAKE_ACTUATOR_METRICS_GATEWAY_REQUESTS = "hello from fake /actuator/metrics/gateway.requests";
@@ -154,6 +156,22 @@ public class GatewaySampleApplication {
 				)
 				.build();
 		//@formatter:on
+	}
+
+	@Bean
+	RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator(StringRedisTemplate redisTemplate){
+		return new RedidRouteDefinitionRepositoryOperator(redisTemplate);
+	}
+
+	@Bean
+	RedisRouteDefinitionRepository redisRouteDefinitionRepository(RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator){
+		return new RedisRouteDefinitionRepository(redidRouteDefinitionOperator);
+	}
+
+	@Bean
+	@ConditionalOnEnabledPredicate
+	BlackRemoteAddrRoutePredicateFactory blackRemoteAddressRoutePredicateFactory(){
+		return new BlackRemoteAddrRoutePredicateFactory();
 	}
 
 	@Bean

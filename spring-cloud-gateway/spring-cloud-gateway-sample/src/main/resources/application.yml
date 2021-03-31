@@ -7,12 +7,40 @@ test:
 
 spring:
   cloud:
+    discovery:
+      reactive:
+        enabled: true
     gateway:
+#      discovery:
+#        locator:
+#          enabled: true
+#          url-expression: "'lb://' + serviceId"
       routes:
-        - id: hello_route
-          uri: lb:ws://httpbin
-          predicates:
-            - Path=/api
+      - id: hello_route
+        uri: http://localhost:8088/api/hello
+        predicates:
+#        - RemoteAddr=172.17.32.1/18,172.17.31.1/18 #表示1到18都可以访问
+        - BlackRemoteAddr=172.17.32.1/18,172.17.31.1/18
+        - Path=/api/hello
+#    nacos:
+#      discovery:
+#        server-addr: 127.0.0.1:8848
+  #对应 RedisProperties 类
+  redis:
+    host: 59.110.48.116
+    port: 6379
+    password: Bohui#123 # Redis 服务器密码
+    database: 0 #Redis数据库号，默认为0
+    timeout: 0  #Redis连接超时时间，单位毫秒
+    #对应RedisProperties 内部类 Jedis
+    jedis:
+      pool:
+        max-active: 8 # 连接池最大连接数，默认为 8 。使用负数表示没有限制。
+        max-idle: 8 # 默认连接数最小空闲的连接数，默认为 8 。使用负数表示没有限制。
+        min-idle: 0 # 默认连接池最小空闲的连接数，默认为 0 。允许设置 0 和 正数。
+        max-wait: -1 # 连接池最大阻塞等待时间，单位：毫秒。默认为 -1 ，表示不限制。
+
+
 
 logging:
   level:
