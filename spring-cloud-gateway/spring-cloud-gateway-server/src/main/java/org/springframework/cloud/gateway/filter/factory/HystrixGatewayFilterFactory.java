@@ -99,7 +99,6 @@ public class HystrixGatewayFilterFactory
 		if (StringUtils.isEmpty(config.getName()) && !StringUtils.isEmpty(routeId)) {
 			config.setName(routeId);
 		}
-
 		return apply(config);
 	}
 

@@ -158,8 +158,8 @@ public class GatewayAutoConfiguration {
 	}
 
 	/**
-	 *  读取配置文件中配置的的{@link RouteDefinition}
-	 *->>{@link FilterDefinition} ->> {@link PredicateDefinition}并封装
+	 * 读取配置文件中配置的的{@link RouteDefinition} ->>{@link FilterDefinition} ->>
+	 * {@link PredicateDefinition}并封装
 	 * @return
 	 */
 	@Bean
@@ -168,7 +168,8 @@ public class GatewayAutoConfiguration {
 	}
 
 	/**
-	 * PropertiesRouteDefinitionLocator 是{@link RouteDefinitionLocator}的实现类 用于存储从配置文件中读取的路由信息
+	 * PropertiesRouteDefinitionLocator 是{@link RouteDefinitionLocator}的实现类
+	 * 用于存储从配置文件中读取的路由信息
 	 * @param properties 即为上边装配的GatewayProperties Bean
 	 * @return
 	 */
@@ -206,11 +207,11 @@ public class GatewayAutoConfiguration {
 	}
 
 	/**
-	 *
 	 * @param properties 即为装配的GatewayProperties Bean
 	 * @param gatewayFilters 即为装配的 GatewayFilterFactory所有的实现类
-	 * @param predicates 即为装配的  RoutePredicateFactory 所有的实现类
-	 * @param routeDefinitionLocator 即为装配的RouteDefinitionLocator ->CompositeRouteDefinitionLocator
+	 * @param predicates 即为装配的 RoutePredicateFactory 所有的实现类
+	 * @param routeDefinitionLocator 即为装配的RouteDefinitionLocator
+	 * ->CompositeRouteDefinitionLocator
 	 * @return
 	 */
 	@Bean
@@ -224,7 +225,8 @@ public class GatewayAutoConfiguration {
 	}
 
 	/**
-	 * CachingRouteLocator为RoutePredicateHandlerMapping的RouteLocator,见 {@link this#routePredicateHandlerMapping}
+	 * CachingRouteLocator为RoutePredicateHandlerMapping的RouteLocator,见
+	 * {@link this#routePredicateHandlerMapping}
 	 * @param routeLocators 上边装配的RouteDefinitionRouteLocator的Bean
 	 * @return
 	 */
@@ -266,7 +268,6 @@ public class GatewayAutoConfiguration {
 		return new RoutePredicateHandlerMapping(webHandler, routeLocator,
 				globalCorsProperties, environment);
 	}
-
 
 	// ConfigurationProperty beans
 

@@ -34,6 +34,7 @@ public class DiscoveryLocatorProperties {
 	 * The prefix for the routeId, defaults to discoveryClient.getClass().getSimpleName()
 	 * + "_". Service Id will be appended to create the routeId.
 	 */
+	//路由ID前缀，默认为
 	private String routeIdPrefix;
 
 	/**

@@ -41,12 +41,13 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 public class RouteDefinition {
 
 	/**
-	 * 路由ID，如果配置为空则SCG会生成随机生成一个 {@link CompositeRouteDefinitionLocator#getRouteDefinitions}
+	 * 路由ID，如果配置为空则SCG会生成随机生成一个
+	 * {@link CompositeRouteDefinitionLocator#getRouteDefinitions}
 	 */
 	private String id;
 
 	/**
-	 *  配置的断言信息
+	 * 配置的断言信息
 	 */
 	@NotEmpty
 	@Valid

@@ -57,7 +57,7 @@ public class QueryRoutePredicateFactory
 			@Override
 			public boolean test(ServerWebExchange exchange) {
 				if (!StringUtils.hasText(config.regexp)) {
-					//如果参数值正则为空则只匹配参数名
+					// 如果参数值正则为空则只匹配参数名
 					// check existence of header
 					return exchange.getRequest().getQueryParams()
 							.containsKey(config.param);
@@ -69,7 +69,7 @@ public class QueryRoutePredicateFactory
 					return false;
 				}
 				for (String value : values) {
-					//判断参数值是否match配置的正则
+					// 判断参数值是否match配置的正则
 					if (value != null && value.matches(config.regexp)) {
 						return true;
 					}
