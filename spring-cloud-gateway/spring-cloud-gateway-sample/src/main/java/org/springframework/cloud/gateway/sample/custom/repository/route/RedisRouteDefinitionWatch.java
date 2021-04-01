@@ -30,7 +30,7 @@ public class RedisRouteDefinitionWatch implements ApplicationEventPublisherAware
 
 	private static ThreadPoolTaskScheduler getTaskScheduler() {
 		ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-		taskScheduler.setBeanName("Nacso-Watch-Task-Scheduler");
+		taskScheduler.setBeanName("Redis-Watch-Task-Scheduler");
 		taskScheduler.initialize();
 		return taskScheduler;
 	}
@@ -54,7 +54,6 @@ public class RedisRouteDefinitionWatch implements ApplicationEventPublisherAware
 	 * 我们就不这么做了，感兴趣的可以自行实现
 	 */
 	private void redisServicesWatch() {
-		// nacos doesn't support watch now , publish an event every 30 seconds.
 		this.publisher.publishEvent( //30s发布一次事件，通知SCG重新拉取
 				new HeartbeatEvent(this, redisWatchIndex.getAndIncrement()));
 	}

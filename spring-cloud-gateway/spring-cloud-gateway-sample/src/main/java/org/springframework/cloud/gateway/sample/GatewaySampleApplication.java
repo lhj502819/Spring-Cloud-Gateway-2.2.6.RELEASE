@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.cloud.gateway.config.conditional.ConditionalOnEnabledPredicate;
 import org.springframework.cloud.gateway.sample.custom.predicate.BlackRemoteAddrRoutePredicateFactory;
-import org.springframework.cloud.gateway.sample.custom.repository.route.RedisRouteDefinitionRepository;
 import org.springframework.cloud.gateway.sample.custom.repository.operator.RedisRouteDefinitionRepositoryOperator;
+import org.springframework.cloud.gateway.sample.custom.repository.route.RedisRouteDefinitionRepository;
 import org.springframework.cloud.gateway.sample.custom.repository.route.RedisRouteDefinitionWatch;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import reactor.core.publisher.Mono;
