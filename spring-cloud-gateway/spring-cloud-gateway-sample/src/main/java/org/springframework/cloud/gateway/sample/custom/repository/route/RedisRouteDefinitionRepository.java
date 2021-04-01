@@ -1,11 +1,10 @@
-package org.springframework.cloud.gateway.sample.route;
+package org.springframework.cloud.gateway.sample.custom.repository.route;
 
-import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.route.CompositeRouteDefinitionLocator;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionRepository;
-import org.springframework.cloud.gateway.sample.operator.RedidRouteDefinitionRepositoryOperator;
+import org.springframework.cloud.gateway.sample.custom.repository.operator.RedisRouteDefinitionRepositoryOperator;
 import org.springframework.cloud.gateway.support.NotFoundException;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,12 +25,20 @@ public class RedisRouteDefinitionRepository implements RouteDefinitionRepository
 	private final Map<String, RouteDefinition> routes = synchronizedMap(
 			new LinkedHashMap<String, RouteDefinition>());
 
-	private RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator;
+	private RedisRouteDefinitionRepositoryOperator redidRouteDefinitionOperator;
 
-	public RedisRouteDefinitionRepository(RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator) {
+	/**
+	 * 将RedisRouteDefinitionRepositoryOperator组装进来
+	 * @param redidRouteDefinitionOperator
+	 */
+	public RedisRouteDefinitionRepository(RedisRouteDefinitionRepositoryOperator redidRouteDefinitionOperator) {
 		this.redidRouteDefinitionOperator = redidRouteDefinitionOperator;
 	}
 
+	/**
+	 * 在{@link CompositeRouteDefinitionLocator#getRouteDefinitions()}调用时 调用redidRouteDefinitionOperator去Redis中取数据
+	 * @return
+	 */
 	@Override
 	public Flux<RouteDefinition> getRouteDefinitions() {
 		redidRouteDefinitionOperator.getRouteDefinitions().flatMap(r -> save(Mono.just(r))).subscribe();

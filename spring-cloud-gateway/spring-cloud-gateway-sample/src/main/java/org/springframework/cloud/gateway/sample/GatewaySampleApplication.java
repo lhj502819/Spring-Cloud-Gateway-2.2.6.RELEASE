@@ -20,9 +20,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.cloud.gateway.config.conditional.ConditionalOnEnabledPredicate;
-import org.springframework.cloud.gateway.sample.predicate.BlackRemoteAddrRoutePredicateFactory;
-import org.springframework.cloud.gateway.sample.route.RedisRouteDefinitionRepository;
-import org.springframework.cloud.gateway.sample.operator.RedidRouteDefinitionRepositoryOperator;
+import org.springframework.cloud.gateway.sample.custom.predicate.BlackRemoteAddrRoutePredicateFactory;
+import org.springframework.cloud.gateway.sample.custom.repository.route.RedisRouteDefinitionRepository;
+import org.springframework.cloud.gateway.sample.custom.repository.operator.RedisRouteDefinitionRepositoryOperator;
+import org.springframework.cloud.gateway.sample.custom.repository.route.RedisRouteDefinitionWatch;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import reactor.core.publisher.Mono;
 
@@ -159,12 +160,17 @@ public class GatewaySampleApplication {
 	}
 
 	@Bean
-	RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator(StringRedisTemplate redisTemplate){
-		return new RedidRouteDefinitionRepositoryOperator(redisTemplate);
+	RedisRouteDefinitionWatch redisRouteDefinitionWatch(){
+		return new RedisRouteDefinitionWatch();
 	}
 
 	@Bean
-	RedisRouteDefinitionRepository redisRouteDefinitionRepository(RedidRouteDefinitionRepositoryOperator redidRouteDefinitionOperator){
+	RedisRouteDefinitionRepositoryOperator redidRouteDefinitionOperator(StringRedisTemplate redisTemplate){
+		return new RedisRouteDefinitionRepositoryOperator(redisTemplate);
+	}
+
+	@Bean
+	RedisRouteDefinitionRepository redisRouteDefinitionRepository(RedisRouteDefinitionRepositoryOperator redidRouteDefinitionOperator){
 		return new RedisRouteDefinitionRepository(redidRouteDefinitionOperator);
 	}
 

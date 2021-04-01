@@ -1,4 +1,4 @@
-package org.springframework.cloud.gateway.sample.route;
+package org.springframework.cloud.gateway.sample.custom.repository.route;
 
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -6,7 +6,6 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -15,9 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author li.hongjian
  * @email lhj502819@163.com
- * @Date 2021/3/31
+ * @Date 2021/4/1
  */
-@Service
 public class RedisRouteDefinitionWatch implements ApplicationEventPublisherAware, SmartLifecycle {
 
 	private final TaskScheduler taskScheduler = getTaskScheduler();
@@ -51,6 +49,10 @@ public class RedisRouteDefinitionWatch implements ApplicationEventPublisherAware
 		}
 	}
 
+	/**
+	 * 这里最好是自定义一个事件，因为如果使用了Nacos的话，会冲突，这样的话需要修改SCG的源码，监听自定义的事件
+	 * 我们就不这么做了，感兴趣的可以自行实现
+	 */
 	private void redisServicesWatch() {
 		// nacos doesn't support watch now , publish an event every 30 seconds.
 		this.publisher.publishEvent( //30s发布一次事件，通知SCG重新拉取
