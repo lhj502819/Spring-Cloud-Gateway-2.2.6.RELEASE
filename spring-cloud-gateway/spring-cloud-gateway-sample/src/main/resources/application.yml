@@ -27,9 +27,9 @@ spring:
 #        server-addr: 127.0.0.1:8848
   #对应 RedisProperties 类
   redis:
-    host: 59.110.48.116
+    host: 127.0.0.1
     port: 6379
-    password: Bohui#123 # Redis 服务器密码
+    password: 123 # Redis 服务器密码
     database: 0 #Redis数据库号，默认为0
     timeout: 0  #Redis连接超时时间，单位毫秒
     #对应RedisProperties 内部类 Jedis
