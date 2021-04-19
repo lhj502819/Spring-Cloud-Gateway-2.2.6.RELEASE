@@ -64,12 +64,15 @@ public class RewritePathGatewayFilterFactory
 			public Mono<Void> filter(ServerWebExchange exchange,
 					GatewayFilterChain chain) {
 				ServerHttpRequest req = exchange.getRequest();
+				//每次进行重写时，都在上下文中保留一次原址的请求URI
 				addOriginalRequestUrl(exchange, req.getURI());
 				String path = req.getURI().getRawPath();
+				//根据配置的正则进行替换
+				// regexp=/user-service/(?<remaining>.*)，replacement=$(remaining)，例如请求的Path为/user-service/api/hello，会被重写为/api/hello。
 				String newPath = path.replaceAll(config.regexp, replacement);
-
+				//基于重写后的Path构建新的请求
 				ServerHttpRequest request = req.mutate().path(newPath).build();
-
+				//将新的请求URI放入上下文中，供后边的Filter使用
 				exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, request.getURI());
 
 				return chain.filter(exchange.mutate().request(request).build());

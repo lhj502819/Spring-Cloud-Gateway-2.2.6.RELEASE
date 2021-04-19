@@ -69,17 +69,19 @@ public class LoadBalancerClientFilter implements GlobalFilter, Ordered {
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		URI url = exchange.getAttribute(GATEWAY_REQUEST_URL_ATTR);
 		String schemePrefix = exchange.getAttribute(GATEWAY_SCHEME_PREFIX_ATTR);
+		//如果不是lb的请求，则不执行
 		if (url == null
 				|| (!"lb".equals(url.getScheme()) && !"lb".equals(schemePrefix))) {
 			return chain.filter(exchange);
 		}
 		// preserve the original url
+		//保留原始的请求地址
 		addOriginalRequestUrl(exchange, url);
 
 		if (log.isTraceEnabled()) {
 			log.trace("LoadBalancerClientFilter url before: " + url);
 		}
-
+		//负载均衡获取真实的服务信息
 		final ServiceInstance instance = choose(exchange);
 
 		if (instance == null) {
@@ -95,19 +97,20 @@ public class LoadBalancerClientFilter implements GlobalFilter, Ordered {
 		if (schemePrefix != null) {
 			overrideScheme = url.getScheme();
 		}
-
+		//使用最终调用服务信息构建URI
 		URI requestUrl = loadBalancer.reconstructURI(
 				new DelegatingServiceInstance(instance, overrideScheme), uri);
 
 		if (log.isTraceEnabled()) {
 			log.trace("LoadBalancerClientFilter url chosen: " + requestUrl);
 		}
-
+		//将请求URI放入上下文，供NettyRoutingFilter使用
 		exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, requestUrl);
 		return chain.filter(exchange);
 	}
 
 	protected ServiceInstance choose(ServerWebExchange exchange) {
+		//此处调用RibbonLoadBalancer负载均衡获取真实服务信息
 		return loadBalancer.choose(
 				((URI) exchange.getAttribute(GATEWAY_REQUEST_URL_ATTR)).getHost());
 	}

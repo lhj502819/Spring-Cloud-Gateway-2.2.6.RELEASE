@@ -23,6 +23,7 @@ import org.springframework.cloud.gateway.config.conditional.ConditionalOnEnabled
 import org.springframework.cloud.gateway.sample.predicate.BlackRemoteAddrRoutePredicateFactory;
 import org.springframework.cloud.gateway.sample.route.RedisRouteDefinitionRepository;
 import org.springframework.cloud.gateway.sample.operator.RedidRouteDefinitionRepositoryOperator;
+import org.springframework.cloud.gateway.sample.route.RedisRouteDefinitionWatch;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import reactor.core.publisher.Mono;
 
@@ -172,6 +173,11 @@ public class GatewaySampleApplication {
 	@ConditionalOnEnabledPredicate
 	BlackRemoteAddrRoutePredicateFactory blackRemoteAddressRoutePredicateFactory(){
 		return new BlackRemoteAddrRoutePredicateFactory();
+	}
+
+	@Bean
+	RedisRouteDefinitionWatch redisRouteDefinitionWatch(){
+		return new RedisRouteDefinitionWatch();
 	}
 
 	@Bean

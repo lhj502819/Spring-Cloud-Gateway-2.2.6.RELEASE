@@ -20,15 +20,12 @@ import static org.springframework.cloud.gateway.support.ShortcutConfigurable.Sho
 
 /**
  * Description：黑名单Predicate
- * 实现黑名单与
  * @author li.hongjian
  * @email lhj502819@163.com
  * @Date 2021/3/31
  */
 public class BlackRemoteAddrRoutePredicateFactory
 		extends AbstractRoutePredicateFactory<BlackRemoteAddrRoutePredicateFactory.Config> {
-
-
 
 	public BlackRemoteAddrRoutePredicateFactory() {
 		super(Config.class);
@@ -112,9 +109,14 @@ public class BlackRemoteAddrRoutePredicateFactory
 	}
 
 	public static class Config{
+		/**
+		 * 可配置多个IP/IP段
+		 */
 		@NotEmpty
 		private List<String> sources = new ArrayList<>();
-
+		/**
+		 * 用来解析客户端IP
+		 */
 		@NotNull
 		private RemoteAddressResolver remoteAddressResolver = new RemoteAddressResolver() {
 		};

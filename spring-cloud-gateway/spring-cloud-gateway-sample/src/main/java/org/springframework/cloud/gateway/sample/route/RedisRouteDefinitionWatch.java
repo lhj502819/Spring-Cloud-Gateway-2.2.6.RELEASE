@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * @email lhj502819@163.com
  * @Date 2021/3/31
  */
-@Service
 public class RedisRouteDefinitionWatch implements ApplicationEventPublisherAware, SmartLifecycle {
 
 	private final TaskScheduler taskScheduler = getTaskScheduler();

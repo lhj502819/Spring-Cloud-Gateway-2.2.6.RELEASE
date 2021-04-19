@@ -48,6 +48,7 @@ public class RedidRouteDefinitionRepositoryOperator implements RouteDefinitionRe
 
 			//初始化FilterDefinition，并添加到RouteDefinition中
 			initFilter(routeDefinition, entries);
+			System.out.println("RedisRouteDefinition：" + JSONObject.toJSONString(routeDefinition));
 			return routeDefinition;
 		}));
 	}

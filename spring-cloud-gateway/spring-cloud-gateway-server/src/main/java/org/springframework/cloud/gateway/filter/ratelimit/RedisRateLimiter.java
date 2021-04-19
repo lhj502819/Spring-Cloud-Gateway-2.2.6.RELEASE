@@ -262,6 +262,11 @@ public class RedisRateLimiter extends AbstractRateLimiter<RedisRateLimiter.Confi
 
 		Config routeConfig = loadConfiguration(routeId);
 
+		/**
+		 * 从字面意思理解为补充率，也就是令牌的补充率，但是SCG的注释为每秒允许用户的请求数
+		 * 可以想象，一个桶往外流水，一个人用勺子取水，我们想控制这个人取水的速度，是不是可以通过控制往桶里面加水的速度从而控制取水的速度
+		 * 也就是通过流入可以控制流出，这里就是这个意思
+		 */
 		// How many requests per second do you want a user to be allowed to do?
 		int replenishRate = routeConfig.getReplenishRate();
 

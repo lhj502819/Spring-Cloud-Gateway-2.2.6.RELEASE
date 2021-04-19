@@ -75,7 +75,7 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 		//获取Route的uri
 		URI routeUri = route.getUri();
 
-		//判断是否为其他类型的协议 如：lb，则会将lb去掉
+		//判断是否为其他类型的协议
 		if (hasAnotherScheme(routeUri)) {
 			// this is a special url, save scheme to special attribute
 			// replace routeUri with schemeSpecificPart
@@ -93,13 +93,14 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 			throw new IllegalStateException("Invalid host: " + routeUri.toString());
 		}
 		//生成RequestURL，并放入上下文中
-		//此处生成的URL的Path最终会以请求的Path为主，会覆盖真正的RouteUri，
+		//此处生成的URL的Path最终会以请求的Path为主，会覆盖真正的RouteUri，并且会使用RouteUri的scheme，如果使用lb的话，那么此处生成的mergedUrl则是lb://xxxxxx
 		// 例如RouteUri为http://localhost:8088/api/hello，请求的URI为http://localhost:8080/api，
 		// 	那此处生成的URL为http://localhost:8080/api
 		URI mergedUrl = UriComponentsBuilder.fromUri(uri)
 				// .uri(routeUri)
 				.scheme(routeUri.getScheme()).host(routeUri.getHost())
 				.port(routeUri.getPort()).build(encoded).toUri();
+		//将新的URL放入请求上下文
 		exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, mergedUrl);
 		return chain.filter(exchange);
 	}
