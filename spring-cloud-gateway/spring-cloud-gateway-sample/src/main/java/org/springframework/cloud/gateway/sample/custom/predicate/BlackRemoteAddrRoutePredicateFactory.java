@@ -1,4 +1,4 @@
-package org.springframework.cloud.gateway.sample.predicate;
+package org.springframework.cloud.gateway.sample.custom.predicate;
 
 import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ipfilter.IpSubnetFilterRule;
