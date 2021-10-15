@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 路由定时刷新
+ *
  * @author li.hongjian
  * @email lhj502819@163.com
  * @Date 2021/4/1
